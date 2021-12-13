@@ -4,22 +4,19 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-//! Fixed-base Scalar Multiplication Gate
-
 use crate::constraint_system::ecc::Point;
 use crate::constraint_system::{variable::Variable, StandardComposer};
 use ark_ec::models::twisted_edwards_extended::{GroupAffine, GroupProjective};
 use ark_ec::models::TEModelParameters;
-use ark_ec::{PairingEngine, ProjectiveCurve};
+use ark_ec::{ModelParameters, PairingEngine, ProjectiveCurve};
 use ark_ff::{BigInteger, FpParameters, PrimeField};
 use num_traits::{One, Zero};
 
-fn compute_wnaf_point_multiples<P>(
+fn compute_wnaf_point_multiples<P: TEModelParameters>(
     base_point: GroupProjective<P>,
 ) -> Vec<GroupAffine<P>>
 where
-    P: TEModelParameters,
-    P::BaseField: PrimeField,
+    <P as ModelParameters>::BaseField: PrimeField,
 {
     let mut multiples = vec![
         GroupProjective::<P>::default();
@@ -30,15 +27,14 @@ where
     for i in 1..<P::BaseField as PrimeField>::Params::MODULUS_BITS as usize {
         multiples[i] = multiples[i - 1].double();
     }
+
     ProjectiveCurve::batch_normalization_into_affine(&multiples)
 }
 
-impl<E, P> StandardComposer<E, P>
-where
-    E: PairingEngine,
-    P: TEModelParameters<BaseField = E::Fr>,
+impl<E: PairingEngine, P: TEModelParameters<BaseField = E::Fr>>
+    StandardComposer<E, P>
 {
-    /// Adds an elliptic curve scalar multiplication gate to the circuit
+    /// Adds an elliptic curve Scalar multiplication gate to the circuit
     /// description.
     ///
     /// # Note
@@ -48,7 +44,7 @@ where
     /// the generator or basepoint of the curve over which we are operating.
     pub fn fixed_base_scalar_mul(
         &mut self,
-        scalar: Variable,
+        jubjub_scalar: Variable,
         base_point: GroupAffine<P>,
     ) -> Point<E, P> {
         let num_bits =
@@ -58,11 +54,16 @@ where
             compute_wnaf_point_multiples(base_point.into());
         point_multiples.reverse();
 
-        let scalar_value = self.variables.get(&scalar).unwrap();
+        // Fetch the raw scalar value as bls scalar, then convert to a jubjub
+        // scalar
+        // XXX: Not very Tidy, impl From function in JubJub
+        let jubjub_scalar_value = self.variables.get(&jubjub_scalar).unwrap();
 
         // Convert scalar to wnaf_2(k)
-        let wnaf_entries =
-            scalar_value.into_repr().find_wnaf(2).expect("Fix this!");
+        let wnaf_entries = jubjub_scalar_value
+            .into_repr()
+            .find_wnaf(2)
+            .unwrap_or_else(|| panic!("Fix this!"));
         // wnaf_entries.extend(vec![0i64; num_bits - wnaf_entries.len()]);
         assert!(wnaf_entries.len() <= num_bits);
 
@@ -163,10 +164,10 @@ where
         );
 
         // Constrain the last element in the accumulator to be equal to the
-        // input scalar.
-        self.assert_equal(last_accumulated_bit, scalar);
+        // input jubjub scalar
+        self.assert_equal(last_accumulated_bit, jubjub_scalar);
 
-        Point::new(acc_x, acc_y)
+        Point::<E, P>::new(acc_x, acc_y)
     }
 }
 
@@ -177,13 +178,110 @@ mod tests {
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
     use ark_ec::{group::Group, AffineCurve};
-    use ark_ff::PrimeField;
+    use ark_ff::Field;
 
-    fn test_ecc_constraint<E, P>()
-    where
+    fn test_blinding_constraint<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
-    {
+    >() {
+        let res = gadget_tester(
+            |composer: &mut StandardComposer<E, P>| {
+                /*
+                Secret:
+                * `com`, a commitment that we want to hide
+                * `b0`, a scalar
+                * `b1`, a scalar.
+                Public:
+                * `com_blinded`, a blinded commitment
+                * `com_z_h`, a commitment to the vanishing polynomial
+                * `com_x_z_h`, a commitment to X * the vanishing polynomial
+
+                Produces the circuit corresponding to the proof that com_blinded = com + [(b0+b1*x)*z_h(x)]
+                */
+
+                // SECRET INPUT
+
+                // b0 and b1
+                let b0 = E::Fr::from(1234u64);
+                let b1 = E::Fr::from(5678u64);
+                // com
+                let mut buf = [
+                    201, 247, 119, 206, 196, 228, 135, 238, 42, 216, 36, 234,
+                    188, 123, 35, 229, 141, 58, 11, 120, 111, 10, 214, 12, 37,
+                    225, 177, 8, 198, 253, 146, 1,
+                ];
+                let com = GroupAffine::from_random_bytes(&mut buf).unwrap();
+
+                // PUBLIC INPUT
+
+                // com_z_h
+                buf = [
+                    216, 115, 9, 136, 192, 48, 164, 170, 103, 64, 181, 17, 189,
+                    64, 196, 78, 95, 25, 67, 157, 48, 40, 184, 76, 30, 241,
+                    229, 85, 160, 131, 131, 18,
+                ];
+                let com_z_h = GroupAffine::from_random_bytes(&mut buf).unwrap();
+                // com_x_z_h
+                buf = [
+                    99, 254, 249, 48, 161, 217, 87, 100, 253, 116, 218, 14, 14,
+                    185, 217, 168, 230, 151, 230, 71, 86, 253, 173, 24, 148,
+                    243, 137, 195, 240, 65, 189, 14,
+                ];
+                let com_x_z_h =
+                    GroupAffine::from_random_bytes(&mut buf).unwrap();
+
+                // EXPECTED POINTS FOR THE CIRCUIT CHECK
+
+                let expected_blinding_term: GroupAffine<P> = (AffineCurve::mul(
+                    &com_z_h,
+                    util::to_embedded_curve_scalar::<E, P>(b0),
+                )
+                    + AffineCurve::mul(
+                        &com_x_z_h,
+                        util::to_embedded_curve_scalar::<E, P>(b1),
+                    ))
+                .into();
+                let expected_com_blinded = com + expected_blinding_term;
+
+                // CIRCUIT
+
+                // Adding the secrets b0 and b1 into the circuit
+                let secret_b0 = composer.add_input(b0);
+                let secret_b1 = composer.add_input(b1);
+                let secret_com_x = composer.add_input(com.x);
+                let secret_com_y = composer.add_input(com.y);
+                let secret_com = Point::<E, P>::new(secret_com_x, secret_com_y);
+
+                // Multiplication and addition constraints
+                let component_b0 =
+                    composer.fixed_base_scalar_mul(secret_b0, com_z_h);
+
+                let component_b1 =
+                    composer.fixed_base_scalar_mul(secret_b1, com_x_z_h);
+
+                let component_b0_b1 =
+                    composer.point_addition_gate(component_b0, component_b1);
+
+                let component_blinded_commitment =
+                    composer.point_addition_gate(component_b0_b1, secret_com);
+
+                // Final constraint
+                composer.assert_equal_public_point(
+                    component_blinded_commitment,
+                    expected_com_blinded,
+                );
+
+                assert_eq!(composer.q_l.len(), 525);
+            },
+            600,
+        );
+        assert!(res.is_ok());
+    }
+
+    fn test_ecc_constraint<
+        E: PairingEngine,
+        P: TEModelParameters<BaseField = E::Fr>,
+    >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
                 let scalar = E::Fr::from_le_bytes_mod_order(&[
@@ -214,11 +312,10 @@ mod tests {
         assert!(res.is_ok());
     }
 
-    fn test_ecc_constraint_zero<E, P>()
-    where
+    fn test_ecc_constraint_zero<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
-    {
+    >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
                 let scalar = E::Fr::zero();
@@ -243,11 +340,10 @@ mod tests {
         assert!(res.is_ok());
     }
 
-    fn test_ecc_constraint_should_fail<E, P>()
-    where
+    fn test_ecc_constraint_should_fail<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
-    {
+    >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
                 let scalar = E::Fr::from(100u64);
@@ -276,11 +372,10 @@ mod tests {
         assert!(res.is_err());
     }
 
-    fn test_point_addition<E, P>()
-    where
+    fn test_point_addition<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
-    {
+    >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
@@ -313,11 +408,10 @@ mod tests {
         assert!(res.is_ok());
     }
 
-    fn test_pedersen_hash<E, P>()
-    where
+    fn test_pedersen_hash<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
-    {
+    >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
@@ -387,11 +481,10 @@ mod tests {
         assert!(res.is_ok());
     }
 
-    fn test_pedersen_balance<E, P>()
-    where
+    fn test_pedersen_balance<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
-    {
+    >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
@@ -450,35 +543,36 @@ mod tests {
         assert!(res.is_ok());
     }
 
-    // Bls12-381 tests
-    batch_test!(
-        [
-            test_ecc_constraint,
-            test_ecc_constraint_zero,
-            test_ecc_constraint_should_fail,
-            test_point_addition,
-            test_pedersen_hash,
-            test_pedersen_balance
-        ],
-        [] => (
-            Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
-        )
-    );
+    // // Bls12-381 tests
+    // batch_test!(
+    //     [
+    //     test_ecc_constraint,
+    //     test_ecc_constraint_zero,
+    //     test_ecc_constraint_should_fail,
+    //     test_point_addition,
+    //     test_pedersen_hash,
+    //     test_pedersen_balance
+    //     ],
+    //     [] => (
+    //     Bls12_381,
+    //     ark_ed_on_bls12_381::EdwardsParameters
+    //     )
+    // );
 
     // Bls12-377 tests
     batch_test!(
         [
-            test_ecc_constraint,
-            test_ecc_constraint_zero,
-            test_ecc_constraint_should_fail,
-            test_point_addition,
-            test_pedersen_hash,
-            test_pedersen_balance
+            test_blinding_constraint
+        // test_ecc_constraint,
+        // test_ecc_constraint_zero,
+        // test_ecc_constraint_should_fail,
+        // test_point_addition,
+        // test_pedersen_hash,
+        // test_pedersen_balance
         ],
         [] => (
-            Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+        Bls12_377,
+        ark_ed_on_bls12_377::EdwardsParameters
         )
     );
 }
