@@ -180,7 +180,7 @@ mod tests {
     use ark_ec::{group::Group, AffineCurve};
     use ark_ff::Field;
 
-    fn test_blinding_constraint<
+    fn test_blinding_circuit<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
     >() {
@@ -562,7 +562,7 @@ mod tests {
     // Bls12-377 tests
     batch_test!(
         [
-            test_blinding_constraint
+            test_blinding_circuit
         // test_ecc_constraint,
         // test_ecc_constraint_zero,
         // test_ecc_constraint_should_fail,
