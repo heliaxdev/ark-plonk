@@ -179,6 +179,7 @@ mod tests {
     use ark_bls12_381::Bls12_381;
     use ark_ec::{group::Group, AffineCurve};
     use ark_ff::Field;
+    use rand::Rng;
 
     fn test_blinding_circuit<
         E: PairingEngine,
@@ -202,10 +203,16 @@ mod tests {
                 // SECRET INPUT
 
                 // b0 and b1
+                // let mut buf = [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4];
+                // let mut buf = rand::thread_rng().gen::<[u8;32]>();
+                // let b0 = E::Fr::from_random_bytes(&mut
+                // buf).unwrap();
+		// the code above does not work with the random buf,
+		// but works with the hardcoded one...
                 let b0 = E::Fr::from(1234u64);
-                let b1 = E::Fr::from(5678u64);
+		let b1 = E::Fr::from(5678u64);
                 // com
-                let mut buf = [
+                buf = [
                     201, 247, 119, 206, 196, 228, 135, 238, 42, 216, 36, 234,
                     188, 123, 35, 229, 141, 58, 11, 120, 111, 10, 214, 12, 37,
                     225, 177, 8, 198, 253, 146, 1,
