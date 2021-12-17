@@ -2,15 +2,15 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::{batch_test, constraint_system::helper::*, util};
-    use ark_bls12_377::Bls12_377;
-    use ark_ec::AffineCurve;
-    use ark_ec::PairingEngine;
-    use ark_ec::models::TEModelParameters;
     use crate::constraint_system::ecc::Point;
     use crate::constraint_system::StandardComposer;
+    use crate::{batch_test, constraint_system::helper::*, util};
+    use ark_bls12_377::Bls12_377;
     use ark_ec::models::twisted_edwards_extended::GroupAffine;
-    
+    use ark_ec::models::TEModelParameters;
+    use ark_ec::AffineCurve;
+    use ark_ec::PairingEngine;
+
     fn test_blinding_circuit<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
@@ -33,14 +33,15 @@ mod tests {
                 // SECRET INPUT
 
                 // b0 and b1
-                // let mut buf = [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4];
-                // let mut buf = rand::thread_rng().gen::<[u8;32]>();
-                // let b0 = E::Fr::from_random_bytes(&mut
-                // buf).unwrap();
-		        // the code above does not work with the random buf,
-		        // but works with the hardcoded one...
+                // let mut buf =
+                // [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4,1,2,
+                // 3,4]; let mut buf =
+                // rand::thread_rng().gen::<[u8;32]>(); let b0 =
+                // E::Fr::from_random_bytes(&mut buf).unwrap();
+                // the code above does not work with the random buf,
+                // but works with the hardcoded one...
                 let b0 = E::Fr::from(1234u64);
-		        let b1 = E::Fr::from(5678u64);
+                let b1 = E::Fr::from(5678u64);
                 // com
                 let mut buf = [
                     201, 247, 119, 206, 196, 228, 135, 238, 42, 216, 36, 234,
@@ -114,7 +115,7 @@ mod tests {
         );
         assert!(res.is_ok());
     }
-    
+
     // Bls12-377 tests
     batch_test!(
         [
