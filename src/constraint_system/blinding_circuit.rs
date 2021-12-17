@@ -1,23 +1,16 @@
 // PBC blinding circuit
 
-use crate::constraint_system::ecc::Point;
-use crate::constraint_system::{variable::Variable, StandardComposer};
-use ark_ec::models::twisted_edwards_extended::{GroupAffine, GroupProjective};
-use ark_ec::models::TEModelParameters;
-use ark_ec::{ModelParameters, PairingEngine, ProjectiveCurve};
-use ark_ff::{BigInteger, FpParameters, PrimeField};
-use num_traits::{One, Zero};
-
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::{batch_test, constraint_system::helper::*, util};
     use ark_bls12_377::Bls12_377;
-    use ark_bls12_381::Bls12_381;
-    use ark_ec::{group::Group, AffineCurve};
-    use ark_ff::Field;
-    use rand::Rng;
-
+    use ark_ec::AffineCurve;
+    use ark_ec::PairingEngine;
+    use ark_ec::models::TEModelParameters;
+    use crate::constraint_system::ecc::Point;
+    use crate::constraint_system::StandardComposer;
+    use ark_ec::models::twisted_edwards_extended::GroupAffine;
+    
     fn test_blinding_circuit<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
