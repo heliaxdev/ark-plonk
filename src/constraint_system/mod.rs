@@ -13,6 +13,8 @@ mod boolean;
 mod logic;
 mod range;
 
+mod blinding_circuit;
+
 pub(crate) mod composer;
 pub(crate) mod helper;
 pub(crate) mod variable;
