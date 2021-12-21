@@ -298,7 +298,7 @@ where
             + (q_4 * d_eval)
             + q_c
             + pi.unwrap_or_default();
-        let c = self.add_input(c_eval);
+            let c = self.add_input(c_eval);
 
         self.big_add_gate(a, b, c, Some(d), q_l, q_r, q_o, q_4, q_c, pi)
     }
