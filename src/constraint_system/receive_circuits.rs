@@ -9,8 +9,9 @@ mod tests {
     use ark_ec::models::TEModelParameters;
     use ark_ec::AffineCurve;
     use ark_ec::PairingEngine;
-    use crate::prelude::Point;
+    use crate::prelude::Variable;
     use ark_ff::Zero;
+    use ark_ff::One;
 
     fn test_allow_all_circuit<
         E: PairingEngine,
@@ -32,51 +33,44 @@ mod tests {
     >() {
         let res = gadget_tester(
             |composer: &mut StandardComposer<E, P>| {
+
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
                 let generator: GroupAffine<P> = GroupAffine::new(x, y);
                 
+                const N: usize = 12;
+
                 // `whitelist` is a (secret) list of senders authorized keys
                 let whitelist: Vec<GroupAffine<P>> = (0..12)
                 .map(|i| generator.mul(i).into())
                 .collect();
 
                 // `sender` is a potential sender
-                let sender:GroupAffine<P> = generator.mul(1).into();
+                let sender:GroupAffine<P> = generator.mul(4).into();
 
                 // we compute the polynomial P(X) = \prod_i (X - whitelist[i].y)
                 // and the circuit checks that P(sender.y) == 0
                 let zero = composer.zero_var();
                 let sender_y = composer.add_input(sender.y);
-                let minus_white_list_0_y = composer.add_input(-whitelist[0].y);
-
-                let output = sender.y - whitelist[0].y;
                 
-                let subst = composer.add(
-                    (sender.y,sender_y), 
-                    (-whitelist[0].y, minus_white_list_0_y),
-                     -output,
-                      None
+                let mut white_list_y: [Variable;N] = [zero;N];
+                let mut subst: [Variable;N] = [zero;N];
+                let mut mult:[Variable;N] = [zero;N];
+                mult[0] = composer.add_input(E::Fr::one());
+
+                for i in 0..N {
+                    white_list_y[i] = composer.add_input(whitelist[i].y);
+                    subst[i] = composer.big_add(
+                        (E::Fr::one(), sender_y),
+                        (-E::Fr::one(), white_list_y[i]),
+                        Some((E::Fr::one(), zero)),
+                        E::Fr::zero(),
+                        None,
                     );
-
-                // This is not working ^
-                // I use y instead of x because of TEModel (?)
-
-
-                // let output2 = sender.y - whitelist[1].y;
-                
-                // let minus_white_list_1_y = composer.add_input(-whitelist[1].y);
-                // let subst2 = composer.add(
-                //     (sender.y,sender_y), 
-                //     (-whitelist[1].y, minus_white_list_1_y),
-                //     -output2,
-                //     None
-                //     );
-                // composer.assert_equal(subst2, zero);
-
-                // output *= output2;
-                // let mult = composer.mul(E::Fr::from(1u64), subst, subst2, E::Fr::from(0u64), None);
-                
-                // composer.assert_equal(mult, zero);
+                    if i>0 {
+                        mult[i] = composer.mul(E::Fr::one(), mult[i-1], subst[i], E::Fr::zero(), None);
+                    }
+                }
+                composer.assert_equal(mult[N-1], zero);
             },
             600,
         );
