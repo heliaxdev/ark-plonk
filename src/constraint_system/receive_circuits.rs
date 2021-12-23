@@ -66,13 +66,13 @@ mod tests {
                 let mut white_list_y: [Variable;N] = [zero;N];
                 let mut subst: [Variable;N] = [zero;N];
                 let mut mult:[Variable;N] = [zero;N];
-                
+
                 mult[0] = composer.add_input(E::Fr::one());
 
                 for i in 0..N {
                     white_list_y[i] = composer.add_input(whitelist[i].y);
                     subst[i] = composer.big_add(
-                        (mult[i-1], sender_y),
+                        (E::Fr::one(), sender_y),
                         (-E::Fr::one(), white_list_y[i]),
                         Some((E::Fr::one(), zero)),
                         E::Fr::zero(),
