@@ -2,17 +2,28 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::constraint_system::StandardComposer;
-    use crate::{batch_test, constraint_system::helper::*};
+    use crate::{
+        constraint_system::{
+            StandardComposer,
+            helper::*
+        },
+        batch_test,
+        prelude::Variable
+    };
     use ark_bls12_377::Bls12_377;
-    use ark_ec::models::twisted_edwards_extended::GroupAffine;
-    use ark_ec::models::TEModelParameters;
-    use ark_ec::AffineCurve;
-    use ark_ec::PairingEngine;
-    use crate::prelude::Variable;
-    use ark_ff::Zero;
-    use ark_ff::One;
-
+    use ark_ec::{
+        models::{
+            twisted_edwards_extended::GroupAffine,
+            TEModelParameters
+        },
+        AffineCurve,
+        PairingEngine
+    };
+    use ark_ff::{
+        Zero,
+        One
+    };
+    
     fn test_allow_all_circuit<
         E: PairingEngine,
         P: TEModelParameters<BaseField = E::Fr>,
@@ -37,10 +48,10 @@ mod tests {
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
                 let generator: GroupAffine<P> = GroupAffine::new(x, y);
                 
-                const N: usize = 12;
+                const N: usize = 50;
 
                 // `whitelist` is a (secret) list of senders authorized keys
-                let whitelist: Vec<GroupAffine<P>> = (0..12)
+                let whitelist: Vec<GroupAffine<P>> = (0..N as u64)
                 .map(|i| generator.mul(i).into())
                 .collect();
 
@@ -55,12 +66,13 @@ mod tests {
                 let mut white_list_y: [Variable;N] = [zero;N];
                 let mut subst: [Variable;N] = [zero;N];
                 let mut mult:[Variable;N] = [zero;N];
+                
                 mult[0] = composer.add_input(E::Fr::one());
 
                 for i in 0..N {
                     white_list_y[i] = composer.add_input(whitelist[i].y);
                     subst[i] = composer.big_add(
-                        (E::Fr::one(), sender_y),
+                        (mult[i-1], sender_y),
                         (-E::Fr::one(), white_list_y[i]),
                         Some((E::Fr::one(), zero)),
                         E::Fr::zero(),
@@ -71,6 +83,7 @@ mod tests {
                     }
                 }
                 composer.assert_equal(mult[N-1], zero);
+                println!("nb of gates: {}", composer.q_l.len())
             },
             600,
         );
