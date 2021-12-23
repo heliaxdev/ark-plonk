@@ -84,6 +84,32 @@ mod tests {
                 }
                 composer.assert_equal(mult[N-1], zero);
                 println!("nb of gates: {}", composer.q_l.len())
+
+                /*
+                Another code that halves the number of gates but uses variable q_L, q_R, etc.
+                let zero = composer.zero_var();
+                let sender_y = composer.add_input(sender.y);
+                                
+                let mut white_list_y: [Variable;N] = [zero;N];
+                let mut subst: [Variable;N] = [zero;N];
+
+                let mut multiplier = E::Fr::one();
+
+                for i in 0..N {
+                    white_list_y[i] = composer.add_input(whitelist[i].y);
+                    subst[i] = composer.big_add(
+                        (multiplier, sender_y),
+                        (-multiplier, white_list_y[i]),
+                        Some((E::Fr::one(), zero)),
+                        E::Fr::zero(),
+                        None,
+                    );
+                    if i>0 {
+                        multiplier *= sender.y - whitelist[i].y;
+                    }
+                }
+                composer.assert_equal(subst[N-1], zero);
+                */
             },
             600,
         );
