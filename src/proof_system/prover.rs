@@ -15,7 +15,7 @@ use crate::{
         linearisation_poly, proof::Proof, quotient_poly, ProverKey,
     },
     transcript::{TranscriptProtocol, TranscriptWrapper},
-    util,
+    util, circuit::BlindingRandomness,
 };
 use ark_ec::{PairingEngine, TEModelParameters};
 use ark_ff::{Field, UniformRand};
@@ -85,12 +85,18 @@ where
 
     /// Preprocesses the underlying constraint system.
     pub fn preprocess(&mut self, commit_key: &Powers<E>) -> Result<(), Error> {
+        let br = BlindingRandomness::default();
+        self.preprocess_wbr(commit_key, &br)
+    }
+
+    /// Preprocesses the underlying constraint system, with blinding randomness `br`.
+    pub fn preprocess_wbr(&mut self, commit_key: &Powers<E>, br: &BlindingRandomness<E::Fr>) -> Result<(), Error> {
         if self.prover_key.is_some() {
             return Err(Error::CircuitAlreadyPreprocessed);
         }
         let pk = self
             .cs
-            .preprocess_prover(commit_key, &mut self.preprocessed_transcript)?;
+            .preprocess_prover(commit_key, &mut self.preprocessed_transcript, br)?;
         self.prover_key = Some(pk);
         Ok(())
     }
@@ -507,7 +513,7 @@ where
             w_z_comm: w_z_comm.0,
             w_zw_comm: w_zw_comm.0,
             evaluations: evaluations.proof,
-            __: PhantomData,
+            __: PhantomData
         })
     }
 
@@ -521,11 +527,8 @@ where
         if self.prover_key.is_none() {
             // Preprocess circuit and store preprocessed circuit and transcript
             // in the Prover.
-            self.prover_key = Some(self.cs.preprocess_prover(
-                commit_key,
-                &mut self.preprocessed_transcript,
-            )?);
-        }
+            self.preprocess(commit_key)?;
+        };
 
         let prover_key = self.prover_key.as_ref().unwrap();
 

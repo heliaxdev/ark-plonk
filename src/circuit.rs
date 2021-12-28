@@ -22,6 +22,8 @@ use ark_poly_commit::kzg10::{self, Powers, UniversalParams};
 use ark_poly_commit::sonic_pc::SonicKZG10;
 use ark_poly_commit::PolynomialCommitment;
 use ark_serialize::*;
+use rand_core::OsRng;
+
 
 /// Field Element Into Public Input
 ///
@@ -144,6 +146,31 @@ where
     /// Returns a reference to the contained Public Input positions.
     pub fn pi_pos(&self) -> &[usize] {
         &self.pi_pos
+    }
+}
+
+/// Struct encoding circuit blinding randomness
+#[derive(
+    Default,
+    Clone,
+    Debug
+)]
+pub struct BlindingRandomness<F>
+where
+    F: PrimeField
+{
+    /// Random scalars
+    pub r: [[F; 2]; 11]
+}
+
+impl<F> BlindingRandomness<F>
+where F: PrimeField
+{
+    /// Sample fresh blinding randomness
+    pub fn new() -> BlindingRandomness<F> {
+        BlindingRandomness {
+            r: [[F::rand(&mut OsRng); 2]; 11]
+        }
     }
 }
 
@@ -316,6 +343,18 @@ where
         &mut self,
         u_params: &UniversalParams<E>,
     ) -> Result<(ProverKey<E::Fr, P>, VerifierData<E, P>), Error> {
+        let br = BlindingRandomness::default();
+        self.compile_wbr(u_params, &br)
+    }
+
+    /// Compiles the circuit using blinding randomness `br` by using a function that returns a
+    /// `Result` with the `ProverKey`, `VerifierKey` and the circuit size.
+    #[allow(clippy::type_complexity)] // NOTE: Clippy is too hash here.
+    fn compile_wbr(
+        &mut self,
+        u_params: &UniversalParams<E>,
+        br: &BlindingRandomness<E::Fr>,
+    ) -> Result<(ProverKey<E::Fr, P>, VerifierData<E, P>), Error> {
         // Setup PublicParams
         // XXX: KZG10 does not have a trim function so we use sonics and
         // then do a transformation between sonic CommiterKey to KZG10
@@ -333,16 +372,17 @@ where
             powers_of_g: ck.powers_of_g.into(),
             powers_of_gamma_g: ck.powers_of_gamma_g.into(),
         };
+
         //Generate & save `ProverKey` with some random values.
         let mut prover = Prover::new(b"CircuitCompilation");
         self.gadget(prover.mut_cs())?;
         let pi_pos = prover.mut_cs().pi_positions();
-        prover.preprocess(&powers)?;
+        prover.preprocess_wbr(&powers, br)?;
 
         // Generate & save `VerifierKey` with some random values.
         let mut verifier = Verifier::new(b"CircuitCompilation");
         self.gadget(verifier.mut_cs())?;
-        verifier.preprocess(&powers)?;
+        verifier.preprocess_wbr(&powers, br)?;
         Ok((
             prover
                 .prover_key
@@ -614,5 +654,87 @@ mod test {
     #[allow(non_snake_case)]
     fn test_full_on_Bls12_377() -> Result<(), Error> {
         test_full::<Bls12_377, ark_ed_on_bls12_377::EdwardsParameters>()
+    }
+
+    fn test_blind<E: PairingEngine, P: TEModelParameters<BaseField = E::Fr>>(
+    ) -> Result<(), Error> {
+        // Generate CRS
+        let pp = KZG10::<E, DensePolynomial<E::Fr>>::setup(
+            1 << 12,
+            false,
+            &mut OsRng,
+        )?;
+
+        let mut circuit = TestCircuit::<E, P>::default();
+
+        let br = BlindingRandomness::new();
+
+        // Compile the circuit
+        let (pk_p, verifier_data) = circuit.compile_wbr(&pp, &br)?;
+
+        let (x, y) = P::AFFINE_GENERATOR_COEFFS;
+        let generator: GroupAffine<P> = GroupAffine::new(x, y);
+        let point_f_pi: GroupAffine<P> = AffineCurve::mul(
+            &generator,
+            P::ScalarField::from(2u64).into_repr(),
+        )
+        .into_affine();
+
+        // Prover POV
+        let proof = {
+            let mut circuit: TestCircuit<E, P> = TestCircuit {
+                a: E::Fr::from(20u64),
+                b: E::Fr::from(5u64),
+                c: E::Fr::from(25u64),
+                d: E::Fr::from(100u64),
+                e: P::ScalarField::from(2u64),
+                f: point_f_pi,
+            };
+
+            circuit.gen_proof(&pp, pk_p, b"Test")?
+        };
+
+        // Test serialisation for verifier_data
+        let mut verifier_data_bytes = Vec::new();
+        verifier_data.serialize(&mut verifier_data_bytes).unwrap();
+
+        let verif_data: VerifierData<E, P> =
+            VerifierData::deserialize(verifier_data_bytes.as_slice()).unwrap();
+
+        assert!(verif_data == verifier_data);
+
+        // Verifier POV
+        let public_inputs: Vec<PublicInputValue<P>> = vec![
+            E::Fr::from(25u64).into_pi(),
+            E::Fr::from(100u64).into_pi(),
+            GeIntoPubInput::into_pi(point_f_pi),
+        ];
+
+        let VerifierData { key, pi_pos } = verifier_data;
+
+        // TODO: non-ideal hack for a first functional version.
+        assert!(verify_proof::<E, P>(
+            &pp,
+            key,
+            &proof,
+            &public_inputs,
+            &pi_pos,
+            b"Test",
+        )
+        .is_ok());
+
+        Ok(())
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_blind_on_Bls12_381() -> Result<(), Error> {
+        test_blind::<Bls12_381, ark_ed_on_bls12_381::EdwardsParameters>()
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_blind_on_Bls12_377() -> Result<(), Error> {
+        test_blind::<Bls12_377, ark_ed_on_bls12_377::EdwardsParameters>()
     }
 }

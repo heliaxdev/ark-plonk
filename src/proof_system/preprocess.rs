@@ -8,6 +8,7 @@
 
 //! Methods to preprocess the constraint system for use in a proof.
 
+use crate::circuit::BlindingRandomness;
 use crate::constraint_system::StandardComposer;
 use crate::error::Error;
 use crate::proof_system::{widget, ProverKey};
@@ -15,7 +16,8 @@ use crate::transcript::TranscriptWrapper;
 use ark_ec::{PairingEngine, TEModelParameters};
 use ark_ff::PrimeField;
 use ark_poly::polynomial::univariate::DensePolynomial;
-use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain};
+use ark_poly::univariate::SparsePolynomial;
+use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, UVPolynomial};
 use ark_poly_commit::kzg10::{Powers, KZG10};
 use num_traits::{One, Zero};
 
@@ -115,9 +117,10 @@ where
         &mut self,
         commit_key: &Powers<E>,
         transcript: &mut TranscriptWrapper<E>,
+        br: &BlindingRandomness<E::Fr>,
     ) -> Result<ProverKey<E::Fr, P>, Error> {
         let (_, selectors, domain) =
-            self.preprocess_shared(commit_key, transcript)?;
+            self.preprocess_shared(commit_key, transcript, br)?;
 
         let domain_8n =
             GeneralEvaluationDomain::new(8 * domain.size()).unwrap();
@@ -221,9 +224,10 @@ where
         &mut self,
         commit_key: &Powers<E>,
         transcript: &mut TranscriptWrapper<E>,
+        br: &BlindingRandomness<E::Fr>,
     ) -> Result<widget::VerifierKey<E, P>, Error> {
         let (verifier_key, _, _) =
-            self.preprocess_shared(commit_key, transcript)?;
+            self.preprocess_shared(commit_key, transcript, br)?;
         Ok(verifier_key)
     }
 
@@ -236,6 +240,7 @@ where
         &mut self,
         commit_key: &Powers<E>,
         transcript: &mut TranscriptWrapper<E>,
+        br: &BlindingRandomness<E::Fr>,
     ) -> Result<
         (
             widget::VerifierKey<E, P>,
@@ -286,6 +291,18 @@ where
             DensePolynomial {
                 coeffs: domain.ifft(&self.q_variable_group_add),
             };
+
+        let q_m_poly = add_blinder(&q_m_poly, self.n, br.r[0]);
+        let q_l_poly = add_blinder(&q_l_poly, self.n, br.r[1]);
+        let q_r_poly = add_blinder(&q_r_poly, self.n, br.r[2]);
+        let q_o_poly = add_blinder(&q_o_poly, self.n, br.r[3]);
+        let q_c_poly = add_blinder(&q_c_poly, self.n, br.r[4]);
+        let q_4_poly = add_blinder(&q_4_poly, self.n, br.r[5]);
+        let q_arith_poly = add_blinder(&q_arith_poly, self.n, br.r[6]);
+        let q_range_poly = add_blinder(&q_range_poly, self.n, br.r[7]);
+        let q_logic_poly = add_blinder(&q_logic_poly, self.n, br.r[8]);
+        let q_fixed_group_add_poly = add_blinder(&q_fixed_group_add_poly, self.n, br.r[9]);
+        let q_variable_group_add_poly = add_blinder(&q_variable_group_add_poly, self.n, br.r[10]);
 
         // 2. Compute the sigma polynomials
         let (
@@ -457,6 +474,27 @@ where
         })
         .collect();
     Evaluations::from_vec_and_domain(v_h, domain)
+}
+
+/// Adds to `polynomial a blinder term of the form:
+/// (hiding_coef[0] + hiding_coef[1] X) Z_h
+/// where Z_h is the vanishing polynomial.
+pub fn add_blinder<F>(
+    polynomial: &DensePolynomial<F>,
+    n: usize,
+    hiding_coef: [F; 2],
+) -> DensePolynomial<F>
+where F: PrimeField,
+{
+    let z_h: DensePolynomial<F> =
+        SparsePolynomial::from_coefficients_slice(&[
+            (0, -F::one()),
+            (n, F::one()),
+        ])
+        .into();
+    let rand_poly = DensePolynomial::from_coefficients_vec(hiding_coef.to_vec());
+    let blinder_poly = &rand_poly * &z_h;
+    polynomial + &blinder_poly
 }
 
 #[cfg(test)]

@@ -53,6 +53,7 @@ where
         false,
         &mut OsRng,
     )?;
+
     // Provers View
     let (proof, public_inputs) = {
         // Create a prover struct

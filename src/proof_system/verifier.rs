@@ -8,7 +8,7 @@
 
 //! Verifier-side of the PLONK Proving System
 
-use crate::constraint_system::StandardComposer;
+use crate::{constraint_system::StandardComposer, circuit::BlindingRandomness};
 use crate::error::Error;
 use crate::proof_system::widget::VerifierKey as PlonkVerifierKey;
 use crate::proof_system::Proof;
@@ -74,9 +74,18 @@ where
     /// descriptor so that the `Verifier` instance can verify [`Proof`]s
     /// for this circuit descriptor instance.
     pub fn preprocess(&mut self, commit_key: &Powers<E>) -> Result<(), Error> {
+        let br = BlindingRandomness::default();
+        self.preprocess_wbr(commit_key, &br)
+    }
+
+    /// Preprocess, with blinding randomness `br`, a circuit to obtain a [`VerifierKey`] and a
+    /// circuit descriptor so that the `Verifier` instance can verify [`Proof`]s for this circuit
+    /// descriptor instance.
+    pub fn preprocess_wbr(&mut self, commit_key: &Powers<E>, br: &BlindingRandomness<E::Fr>) -> Result<(), Error> {
         let vk = self.cs.preprocess_verifier(
             commit_key,
             &mut self.preprocessed_transcript,
+            br
         )?;
 
         self.verifier_key = Some(vk);
