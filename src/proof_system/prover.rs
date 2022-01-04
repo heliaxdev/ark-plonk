@@ -229,6 +229,8 @@ where
         let w_r_poly_commit = KZG10::commit(commit_key, &w_r_poly, None, None)?;
         let w_o_poly_commit = KZG10::commit(commit_key, &w_o_poly, None, None)?;
         let w_4_poly_commit = KZG10::commit(commit_key, &w_4_poly, None, None)?;
+        // todo randomize them in order to get "ZK" proofs!
+        println!("Here are the KZG commitment to w_l, w_r, w_o, w_4, i.e. a,b,c in the paper notations");
 
         // Add witness polynomial commitments to transcript.
         transcript.append_commitment(b"w_l", &w_l_poly_commit.0);
@@ -264,6 +266,8 @@ where
         let z_poly_commit = KZG10::<E, DensePolynomial<E::Fr>>::commit(
             commit_key, &z_poly, None, None,
         )?;
+        // todo add zero-knowledge!
+        println!("Here is the KZG commitment to z(X)");
 
         // Add permutation polynomial commitment to transcript.
         transcript.append_commitment(b"z", &z_poly_commit.0);
@@ -314,6 +318,7 @@ where
         let t_2_commit = KZG10::commit(commit_key, &t_2_poly, None, None)?;
         let t_3_commit = KZG10::commit(commit_key, &t_3_poly, None, None)?;
         let t_4_commit = KZG10::commit(commit_key, &t_4_poly, None, None)?;
+        println!("commit to t1,t2,t3,t4 polynomimals corresponding to t(X)");
 
         // Add quotient polynomial commitments to transcript
         transcript.append_commitment(b"t_1", &t_1_commit.0);
@@ -326,6 +331,8 @@ where
         // Compute evaluation challenge; `z`.
         let z_challenge = transcript.challenge_scalar(b"z");
 
+        println!("We cannot use the linearization step here iiuc");
+        
         let (lin_poly, evaluations) = linearisation_poly::compute(
             &domain,
             prover_key,

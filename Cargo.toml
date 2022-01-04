@@ -35,6 +35,8 @@ itertools = { version = "0.10.1", default-features = false }
 merlin = { version = "3.0", default-features = false }
 num-traits = "0.2.14"
 rand_core = { version = "0.6", default-features = false, features = ["getrandom"] }
+ark-bls12-381 = "0.3"
+ark-ed-on-bls12-381 = "0.3"
 
 [dev-dependencies]
 ark-bls12-377 = "0.3"
