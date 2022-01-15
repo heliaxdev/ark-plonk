@@ -29,6 +29,7 @@ resolver = "2"
 members = [
     "plonk-core",
     "plonk-hashing",
+    "plonk-ir",
 ]
 
 [dependencies]
