@@ -490,11 +490,22 @@ mod test {
             &mut self,
             composer: &mut StandardComposer<F, P>,
         ) -> Result<(), Error> {
+            // This circuit is
+            // c = a + b
+            // range 6 a
+            // range 5 b
+            // d = a * b
+            // pub d
+            // f = fixed_base_curve_add e g
+            // pub f
+
+            // instantiate the a and b
             let a = composer.add_input(self.a);
             let b = composer.add_input(self.b);
             let zero = composer.zero_var;
 
             // Make first constraint a + b = c (as public input)
+            // a + b = c ---> a + b - c
             composer.arithmetic_gate(|gate| {
                 gate.witness(a, b, Some(zero))
                     .add(F::one(), F::one())
@@ -502,9 +513,13 @@ mod test {
             });
 
             // Check that a and b are in range
+            // range a 6
             composer.range_gate(a, 1 << 6);
+            // range a 5
             composer.range_gate(b, 1 << 5);
             // Make second constraint a * b = d
+            // pub d
+            // pi = public input
             composer.arithmetic_gate(|gate| {
                 gate.witness(a, b, Some(zero)).mul(F::one()).pi(-self.d)
             });
@@ -512,10 +527,13 @@ mod test {
                 .add_input(util::from_embedded_curve_scalar::<F, P>(self.e));
             let (x, y) = P::AFFINE_GENERATOR_COEFFS;
             let generator = GroupAffine::new(x, y);
+            // fixed_base_scalar_mul_g e
             let scalar_mul_result =
                 composer.fixed_base_scalar_mul(e, generator);
 
             // Apply the constrain
+            // f = fixed_base_scalar_mul_g e
+            // pub f
             composer.assert_equal_public_point(scalar_mul_result, self.f);
             Ok(())
         }
