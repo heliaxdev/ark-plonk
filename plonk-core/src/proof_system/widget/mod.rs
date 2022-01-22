@@ -283,7 +283,7 @@ where
     F: FftField,
 {
     /// Circuit size
-    pub(crate) n: usize,
+    pub n: usize,
 
     /// Arithmetic Prover Key
     pub(crate) arithmetic: arithmetic::ProverKey<F>,
