@@ -258,10 +258,36 @@ where
         q_c: F,
         pi: Option<F>,
     ) -> (Variable, Variable, Variable) {
+        self.width_4_poly_gate(a, b, c, self.zero_var, q_m, q_l, q_r, q_o, q_c, F::zero(), pi)
+    }
+
+    /// Adds a width-4 poly gate.
+    /// This gate gives total freedom to the end user to implement the
+    /// corresponding circuits in the most optimized way possible because
+    /// the under has access to the whole set of variables, as well as
+    /// selector coefficients that take part in the computation of the gate
+    /// equation.
+    ///
+    /// The final constraint added will force the following:
+    /// `(a * b) * q_m + a * q_l + b * q_r + d * q_f + q_c + PI + q_o * c = 0`.
+    pub fn width_4_poly_gate(
+        &mut self,
+        a: Variable,
+        b: Variable,
+        c: Variable,
+        d: Variable,
+        q_m: F,
+        q_l: F,
+        q_r: F,
+        q_o: F,
+        q_c: F,
+        q_f: F,
+        pi: Option<F>,
+    ) -> (Variable, Variable, Variable) {
         self.w_l.push(a);
         self.w_r.push(b);
         self.w_o.push(c);
-        self.w_4.push(self.zero_var);
+        self.w_4.push(d);
         self.q_l.push(q_l);
         self.q_r.push(q_r);
 
@@ -269,7 +295,7 @@ where
         self.q_m.push(q_m);
         self.q_o.push(q_o);
         self.q_c.push(q_c);
-        self.q_4.push(F::zero());
+        self.q_4.push(q_f);
         self.q_arith.push(F::one());
 
         self.q_range.push(F::zero());
