@@ -102,7 +102,7 @@ where
     pub(crate) zero_var: Variable,
 
     /// These are the actual variable values.
-    pub(crate) variables: HashMap<Variable, F>,
+    pub variables: HashMap<Variable, F>,
 
     /// Permutation argument.
     pub(crate) perm: Permutation,
