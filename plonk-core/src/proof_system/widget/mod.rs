@@ -17,7 +17,7 @@ use crate::{
     transcript::TranscriptProtocol,
 };
 use ark_ff::{FftField, PrimeField};
-use ark_poly::{univariate::DensePolynomial, Evaluations};
+use ark_poly::{univariate::DensePolynomial, univariate::SparsePolynomial, Evaluations};
 use ark_serialize::*;
 
 /// Gate Values
@@ -223,6 +223,68 @@ where
                 fourth_sigma,
             },
         }
+    }
+
+    pub fn randomize(
+        &self, 
+        setup: &PC::UniversalParams,
+        rng: &mut ThreadRng
+    ) -> (
+        Self,
+        [u32; 20]
+    ) {
+        // randomize the VerifierKey, namely
+        // [q_L(X)]_1 += b0 [Z_H(X)]_1 + b_1 [XZ_H(X)]_1
+        // etc
+
+        let mut blinded_vk = self.clone();
+        let mut rands = [0u32;16];
+
+        let mut blinded_qs = [
+            blinded_vk.arithmetic.q_m,
+            blinded_vk.arithmetic.q_l,
+            blinded_vk.arithmetic.q_r,
+            blinded_vk.arithmetic.q_o,
+            blinded_vk.arithmetic.q_c,
+            blinded_vk.arithmetic.q_4,
+            blinded_vk.permutation.left_sigma,
+            blinded_vk.permutation.right_sigma,
+            blinded_vk.permutation.out_sigma,
+            blinded_vk.permutation.fourth_sigma,
+        ];
+
+        let coeffs_z_h = vec![(0, -F::one()), (self.n, F::one())];
+        let z_h = SparsePolynomial::from_coefficients_vec(coeffs_z_h);
+        let z_h_poly = DensePolynomial::<F>::from_coefficients_vec(domain.ifft(z_h));
+
+        let coeffs_x_z_h = vec![(1, -F::one()), (self.n+1, F::one())];
+        let x_z_h = SparsePolynomial::from_coefficients_vec(coeffs_x_z_h);
+        let x_z_h_poly = DensePolynomial::<F>::from_coefficients_vec(domain.ifft(x_z_h));
+
+        let (coms, com_rng) = PC::commit(setup, [z_h_poly, x_z_h_poly], rng).unwrap();
+        
+        let com_z_h = coms[0];
+        let com_x_z_h = coms[1];
+        
+        let i= 0;
+        for blinded_q_i in blinded_qs {
+            rands[i] = rng.gen();
+            rands[i+1] = rng.gen();
+            blinded_q_i += com_z_h.mul(rands[i]) + com_x_z_h.mul(rands[i+1]);
+            i+=2;
+        }
+        blinded_vk.arithmetic.q_m = blinded_qs[0];
+        blinded_vk.arithmetic.q_l = blinded_qs[1];
+        blinded_vk.arithmetic.q_r = blinded_qs[2];
+        blinded_vk.arithmetic.q_o = blinded_qs[3];
+        blinded_vk.arithmetic.q_c = blinded_qs[4];
+        blinded_vk.arithmetic.q_4 = blinded_qs[5];
+        blinded_vk.permutation.left_sigma = blinded_qs[6];
+        blinded_vk.permutation.right_sigma = blinded_qs[7];
+        blinded_vk.permutation.out_sigma = blinded_qs[8];
+        blinded_vk.permutation.fourth_sigma = blinded_qs[9];
+
+        (blinded_vk, rands)
     }
 
     /// Returns the Circuit size padded to the next power of two.
