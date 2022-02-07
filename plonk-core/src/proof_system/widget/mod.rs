@@ -238,14 +238,12 @@ where
         &self,
         setup: &PC::CommitterKey,
         rng: &mut ThreadRng,
-    ) -> (Self, [F; 16]) {
+    ) -> (Self, [F; 20]) {
         // randomize the VerifierKey, namely
         // [q_L(X)]_1 += b0 [Z_H(X)]_1 + b_1 [XZ_H(X)]_1
         // etc.
 
         let domain = GeneralEvaluationDomain::<F>::new(self.n).unwrap();
-
-        let mut rands = [F::zero(); 16];
 
         let qs = [
             self.arithmetic.q_m.clone(),
@@ -290,6 +288,7 @@ where
 
         let mut i = 0;
         let mut blinded_qs = vec![];
+        let mut rands = [F::zero(); 20]; // 20 == qs.len()
         for blinded_q_i in qs {
             rands[i] = F::rand(rng);
             rands[i + 1] = F::rand(rng);
