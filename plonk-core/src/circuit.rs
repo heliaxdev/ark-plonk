@@ -16,6 +16,7 @@ use ark_ec::models::TEModelParameters;
 use ark_ff::{Field, PrimeField, ToConstraintField};
 use ark_serialize::*;
 use rand::thread_rng;
+use rand::rngs::ThreadRng;
 
 /// Public Input Builder
 #[derive(derivative::Derivative)]
@@ -99,6 +100,11 @@ where
     /// Returns a reference to the contained [`VerifierKey`].
     pub fn key(&self) -> &VerifierKey<F, PC> {
         &self.key
+    }
+
+    pub fn randomize_key(&mut self, setup: &PC::CommitterKey, rng: &mut ThreadRng){
+        let (rand_key, _) = self.key.randomize(setup, rng);
+        self.key = rand_key;
     }
 
     /// Returns a reference to the contained Public Input positions.
@@ -493,7 +499,7 @@ mod test {
         VerifierData<F, PC>: PartialEq,
     {
         // Generate CRS
-        let pp = PC::setup(1 << 19, None, &mut OsRng)
+        let pp = PC::setup(1 << 12, None, &mut OsRng)
             .map_err(to_pc_error::<F, PC>)?;
 
         let mut circuit = TestCircuit::<F, P>::default();
@@ -566,13 +572,13 @@ mod test {
         VerifierData<F, PC>: PartialEq,
     {
         // Generate CRS
-        let pp = PC::setup(1 << 12, None, &mut OsRng)
+        let pp = PC::setup(1 << 10, None, &mut OsRng)
             .map_err(to_pc_error::<F, PC>)?;
 
         let mut circuit = TestCircuit::<F, P>::default();
 
         // Compile the circuit
-        let (pk_p, verifier_data) = circuit.compile::<PC>(&pp)?;
+        let (pk_p, mut verifier_data) = circuit.compile::<PC>(&pp)?;
 
         let circuit_size = circuit.padded_circuit_size();
         let (ck, _) = PC::trim(
@@ -582,6 +588,10 @@ mod test {
             0,
             None,
         ).unwrap();
+
+        // randomization of the verifier data
+        let mut rng = thread_rng();
+        verifier_data.randomize_key( &ck, &mut rng);
 
         let (x, y) = P::AFFINE_GENERATOR_COEFFS;
         let generator: GroupAffine<P> = GroupAffine::new(x, y);
@@ -600,7 +610,7 @@ mod test {
                 d: F::from(100u64),
                 e: P::ScalarField::from(2u64),
                 f: point_f_pi,
-            };
+            };  
 
             circuit.gen_proof::<PC>(&pp, pk_p, b"Test")?
         };
@@ -624,14 +634,12 @@ mod test {
             .unwrap()
             .finish();
 
-        let mut rng = thread_rng();
         let VerifierData { key, pi_pos } = verifier_data;
-        let (randomized_key, _) = key.randomize(&ck, &mut rng);
 
         // TODO: non-ideal hack for a first functional version.
         assert!(verify_proof::<F, P, PC>(
             &pp,
-            randomized_key,
+            key,
             &proof,
             &public_inputs,
             &pi_pos,
@@ -663,7 +671,6 @@ mod test {
     }
 
     
-
     #[test]
     #[allow(non_snake_case)]
     fn test_full_on_Bls12_381_ipa() -> Result<(), Error> {
