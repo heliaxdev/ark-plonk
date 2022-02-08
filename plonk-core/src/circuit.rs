@@ -15,6 +15,7 @@ use crate::{
 use ark_ec::models::TEModelParameters;
 use ark_ff::{Field, PrimeField, ToConstraintField};
 use ark_serialize::*;
+use rand::thread_rng;
 
 /// Public Input Builder
 #[derive(derivative::Derivative)]
@@ -557,6 +558,90 @@ mod test {
         Ok(())
     }
 
+    fn test_full_randomized_verifier_key<F, P, PC>() -> Result<(), Error>
+    where
+        F: PrimeField,
+        P: TEModelParameters<BaseField = F>,
+        PC: HomomorphicCommitment<F>,
+        VerifierData<F, PC>: PartialEq,
+    {
+        // Generate CRS
+        let pp = PC::setup(1 << 12, None, &mut OsRng)
+            .map_err(to_pc_error::<F, PC>)?;
+
+        let mut circuit = TestCircuit::<F, P>::default();
+
+        // Compile the circuit
+        let (pk_p, verifier_data) = circuit.compile::<PC>(&pp)?;
+
+        let circuit_size = circuit.padded_circuit_size();
+        let (ck, _) = PC::trim(
+            &pp,
+            // +1 per wire, +2 for the permutation poly
+            circuit_size + 6,
+            0,
+            None,
+        ).unwrap();
+
+        let (x, y) = P::AFFINE_GENERATOR_COEFFS;
+        let generator: GroupAffine<P> = GroupAffine::new(x, y);
+        let point_f_pi: GroupAffine<P> = AffineCurve::mul(
+            &generator,
+            P::ScalarField::from(2u64).into_repr(),
+        )
+        .into_affine();
+
+        // Prover POV
+        let proof = {
+            let mut circuit: TestCircuit<F, P> = TestCircuit {
+                a: F::from(20u64),
+                b: F::from(5u64),
+                c: F::from(25u64),
+                d: F::from(100u64),
+                e: P::ScalarField::from(2u64),
+                f: point_f_pi,
+            };
+
+            circuit.gen_proof::<PC>(&pp, pk_p, b"Test")?
+        };
+
+        // Test serialisation for verifier_data
+        let mut verifier_data_bytes = Vec::new();
+        verifier_data.serialize(&mut verifier_data_bytes).unwrap();
+
+        let deserialized_verifier_data: VerifierData<F, PC> =
+            VerifierData::deserialize(verifier_data_bytes.as_slice()).unwrap();
+
+        assert!(deserialized_verifier_data == verifier_data);
+
+        // Verifier POV
+        let public_inputs = PublicInputBuilder::new()
+            .add_input(&F::from(25u64))
+            .unwrap()
+            .add_input(&F::from(100u64))
+            .unwrap()
+            .add_input(&point_f_pi)
+            .unwrap()
+            .finish();
+
+        let mut rng = thread_rng();
+        let VerifierData { key, pi_pos } = verifier_data;
+        let (randomized_key, _) = key.randomize(&ck, &mut rng);
+
+        // TODO: non-ideal hack for a first functional version.
+        assert!(verify_proof::<F, P, PC>(
+            &pp,
+            randomized_key,
+            &proof,
+            &public_inputs,
+            &pi_pos,
+            b"Test",
+        )
+        .is_ok());
+
+        Ok(())
+    }
+
     #[test]
     #[allow(non_snake_case)]
     fn test_full_on_Bls12_381() -> Result<(), Error> {
@@ -566,6 +651,18 @@ mod test {
             crate::commitment::KZG10<Bls12_381>,
         >()
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_full_randomized_verifier_key_on_Bls12_381() -> Result<(), Error> {
+        test_full_randomized_verifier_key::<
+            <Bls12_381 as PairingEngine>::Fr,
+            ark_ed_on_bls12_381::EdwardsParameters,
+            crate::commitment::KZG10<Bls12_381>,
+        >()
+    }
+
+    
 
     #[test]
     #[allow(non_snake_case)]
