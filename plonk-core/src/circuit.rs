@@ -15,7 +15,6 @@ use crate::{
 use ark_ec::models::TEModelParameters;
 use ark_ff::{Field, PrimeField, ToConstraintField};
 use ark_serialize::*;
-use rand::thread_rng;
 use rand::rngs::ThreadRng;
 
 /// Public Input Builder
@@ -102,6 +101,7 @@ where
         &self.key
     }
 
+    /// fake documentation
     pub fn randomize_key(&mut self, setup: &PC::CommitterKey, rng: &mut ThreadRng){
         let (rand_key, _) = self.key.randomize(setup, rng);
         self.key = rand_key;
