@@ -17,6 +17,7 @@ use ark_ec::TEModelParameters;
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
 use merlin::Transcript;
+use rand::rngs::ThreadRng;
 
 /// Abstraction structure designed verify [`Proof`]s.
 pub struct Verifier<F, P, PC>
@@ -98,6 +99,12 @@ where
     /// [`Transcript::append_message`]: merlin::Transcript::append_message
     pub fn key_transcript(&mut self, label: &'static [u8], message: &[u8]) {
         self.preprocessed_transcript.append_message(label, message);
+    }
+
+    /// fake documentation
+    pub fn randomize(&mut self, setup: &PC::CommitterKey, rng: &mut ThreadRng){
+        let (rand_key, _) = self.verifier_key.as_ref().unwrap().randomize(setup, rng);
+        self.verifier_key = Some(rand_key);
     }
 
     /// Verifies a [`Proof`] using `pc_verifier_key` and `public_inputs`.
