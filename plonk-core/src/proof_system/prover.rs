@@ -39,7 +39,7 @@ where
     pub prover_key: Option<ProverKey<F>>,
 
     /// Circuit Description
-    pub cs: StandardComposer<F, P>,
+    pub(crate) cs: StandardComposer<F, P>,
 
     /// Store the messages exchanged during the preprocessing stage.
     ///
