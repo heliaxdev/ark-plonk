@@ -17,7 +17,6 @@ use ark_ec::TEModelParameters;
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
 use merlin::Transcript;
-use rand::rngs::ThreadRng;
 
 /// Abstraction structure designed verify [`Proof`]s.
 pub struct Verifier<F, P, PC>
@@ -92,6 +91,25 @@ where
         Ok(())
     }
 
+    /// Preprocess a circuit to obtain a [`PlonkVerifierKey<F, PC>`] and a
+    /// circuit descriptor so that the `Verifier` instance can verify
+    /// [`Proof`]s for this circuit descriptor instance.
+    pub fn preprocess_with_blinding(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        blinding_values: [F; 20],
+    ) -> Result<(), Error> {
+        let vk = self.cs.preprocess_verifier_with_blinding(
+            commit_key,
+            &mut self.preprocessed_transcript,
+            PhantomData::<PC>,
+            blinding_values,
+        )?;
+
+        self.verifier_key = Some(vk);
+        Ok(())
+    }
+
     /// Keys the [`Transcript`] with additional seed information
     /// Wrapper around [`Transcript::append_message`].
     ///
@@ -99,12 +117,6 @@ where
     /// [`Transcript::append_message`]: merlin::Transcript::append_message
     pub fn key_transcript(&mut self, label: &'static [u8], message: &[u8]) {
         self.preprocessed_transcript.append_message(label, message);
-    }
-
-    /// fake documentation
-    pub fn randomize(&mut self, setup: &PC::CommitterKey, rng: &mut ThreadRng){
-        let (rand_key, _) = self.verifier_key.as_ref().unwrap().randomize(setup, rng);
-        self.verifier_key = Some(rand_key);
     }
 
     /// Verifies a [`Proof`] using `pc_verifier_key` and `public_inputs`.

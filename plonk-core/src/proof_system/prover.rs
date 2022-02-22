@@ -102,6 +102,25 @@ where
         Ok(())
     }
 
+    /// Preprocesses the underlying constraint system.
+    pub fn preprocess_with_blinding(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        blinding_values: [F; 20],
+    ) -> Result<(), Error> {
+        if self.prover_key.is_some() {
+            return Err(Error::CircuitAlreadyPreprocessed);
+        }
+        let pk = self.cs.preprocess_prover_with_blinding(
+            commit_key,
+            &mut self.preprocessed_transcript,
+            PhantomData::<PC>,
+            blinding_values,
+        )?;
+        self.prover_key = Some(pk);
+        Ok(())
+    }
+
     /// Split `t(X)` poly into 4 polynomials.
     /// The first 3 polynomials have degree n, the 4th has degree n+6
     #[allow(clippy::type_complexity)] // NOTE: This is an ok type for internal use.
@@ -179,7 +198,7 @@ where
     /// (b0 + b1 X + ...+ bk X^k) Z_h
     /// where k is the hiding_degree and Z_h = X^n - 1, the vanishing
     /// polynomial.
-    fn add_blinder(
+    pub fn add_blinder(
         polynomial: &DensePolynomial<F>,
         n: usize,
         hiding_degree: usize,
@@ -472,7 +491,7 @@ where
 
         let saw_challenge: F =
             transcript.challenge_scalar(b"aggregate_witness");
-
+        
         let saw_polys = [
             label_polynomial!(z_poly),
             label_polynomial!(w_l_poly),

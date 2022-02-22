@@ -13,15 +13,12 @@ pub mod range;
 
 use crate::{
     commitment::HomomorphicCommitment,
-    label_polynomial,
     proof_system::{linearisation_poly::ProofEvaluations, permutation},
     transcript::TranscriptProtocol,
 };
 use ark_ff::{FftField, PrimeField};
-use ark_poly::UVPolynomial;
 use ark_poly::{univariate::DensePolynomial, Evaluations};
 use ark_serialize::*;
-use rand::rngs::ThreadRng;
 
 /// Gate Values
 ///
@@ -226,102 +223,6 @@ where
                 fourth_sigma,
             },
         }
-    }
-
-    ///
-    /// Fake
-    /// documentation
-    /// 
-    pub fn randomize(
-        &self,
-        setup: &PC::CommitterKey,
-        rng: &mut ThreadRng,
-    ) -> (Self, [F; 20]) {
-        // randomize the VerifierKey, namely
-        // [q_L(X)]_1 += b0 [Z_H(X)]_1 + b_1 [XZ_H(X)]_1
-        // etc.
-
-        let qs = [
-            self.arithmetic.q_m.clone(),
-            self.arithmetic.q_l.clone(),
-            self.arithmetic.q_r.clone(),
-            self.arithmetic.q_o.clone(),
-            self.arithmetic.q_c.clone(),
-            self.arithmetic.q_4.clone(),
-            self.permutation.left_sigma.clone(),
-            self.permutation.right_sigma.clone(),
-            self.permutation.out_sigma.clone(),
-            self.permutation.fourth_sigma.clone(),
-        ];
-
-        // Z_H(X)
-        let mut coeffs_z_h = Vec::with_capacity(self.n);
-        coeffs_z_h.push(-F::one());
-        for _ in 0..self.n - 1 {
-            coeffs_z_h.push(F::zero());
-        }
-        coeffs_z_h.push(F::one());
-        let z_h_poly = DensePolynomial::<F>::from_coefficients_vec(
-            coeffs_z_h,
-        );
-
-        // X * Z_H(X)
-        let mut coeffs_x_z_h = Vec::with_capacity(self.n + 1);
-        coeffs_x_z_h.push(F::zero());
-        coeffs_x_z_h.push(-F::one());
-        for _ in 0..self.n-1 {
-            coeffs_x_z_h.push(F::zero());
-        }
-        coeffs_x_z_h.push(F::one());
-        let x_z_h_poly = DensePolynomial::<F>::from_coefficients_vec(
-            coeffs_x_z_h,
-        );
-
-        let (coms, _com_rng) = PC::commit(
-            setup,
-            &[label_polynomial!(z_h_poly), label_polynomial!(x_z_h_poly)],
-            Some(rng),
-        )
-        .unwrap();
-
-        let mut i = 0;
-        let mut blinded_qs = vec![];
-        let mut rands = [F::zero(); 20]; // 20 == qs.len()
-        for blinded_q_i in qs {
-            rands[i] = F::rand(rng);
-            rands[i + 1] = F::rand(rng);
-            blinded_qs.push(PC::multi_scalar_mul(
-                &[
-                    blinded_q_i,
-                    coms[0].commitment().clone(),
-                    coms[1].commitment().clone(),
-                ],
-                &[F::one(), rands[i], rands[i + 1]],
-            ));
-            i += 2;
-        }
-
-        (
-            Self::from_polynomial_commitments(
-                self.n,
-                blinded_qs[0].clone(), // self.arithmetic.q_m.clone(),
-                self.arithmetic.q_l.clone(),
-                self.arithmetic.q_r.clone(),
-                self.arithmetic.q_o.clone(),
-                self.arithmetic.q_4.clone(),
-                self.arithmetic.q_c.clone(),
-                self.arithmetic.q_arith.clone(),
-                self.range_selector_commitment.clone(),
-            self.logic_selector_commitment.clone(),
-            self.fixed_group_add_selector_commitment.clone(),
-            self.variable_group_add_selector_commitment.clone(),
-            self.permutation.left_sigma.clone(),
-            self.permutation.right_sigma.clone(),
-            self.permutation.out_sigma.clone(),
-            self.permutation.fourth_sigma.clone(),
-            ),
-            rands,
-        )
     }
 
     /// Returns the Circuit size padded to the next power of two.
