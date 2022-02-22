@@ -559,22 +559,22 @@ where
         // 1. Pad circuit to a power of two
         self.pad(domain.size() as usize - self.n);
 
-        let q_m_poly: DensePolynomial<F> =
+        let mut q_m_poly: DensePolynomial<F> =
             DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_m));
 
-        let q_r_poly: DensePolynomial<F> =
+        let mut q_r_poly: DensePolynomial<F> =
             DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_r));
 
         let mut q_l_poly: DensePolynomial<F> =
             DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_l));
 
-        let q_o_poly: DensePolynomial<F> =
+        let mut q_o_poly: DensePolynomial<F> =
             DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_o));
 
-        let q_c_poly: DensePolynomial<F> =
+        let mut q_c_poly: DensePolynomial<F> =
             DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_c));
 
-        let q_4_poly: DensePolynomial<F> =
+        let mut q_4_poly: DensePolynomial<F> =
             DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_4));
 
         let q_arith_poly: DensePolynomial<F> =
@@ -604,11 +604,14 @@ where
             (domain.size(), F::one()),
         ])
         .into();
-        let rand_poly =
-        DensePolynomial::from_coefficients_vec(vec![blinding_values[0], blinding_values[1]]);
-        let blinder_poly = &rand_poly * &z_h;
-        q_l_poly = q_l_poly + blinder_poly;
-
+        // /!\ WARNING: we blind with `b0 * Z_H(X)` only /!\
+        q_m_poly = q_m_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]]) * &z_h;
+        q_r_poly = q_r_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]]) * &z_h;
+        q_l_poly = q_l_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]]) * &z_h;
+        q_o_poly = q_o_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]]) * &z_h;
+        q_c_poly = q_c_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]]) * &z_h;
+        q_4_poly = q_4_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]]) * &z_h;
+        
         // 2. Compute the sigma polynomials
         let (
             left_sigma_poly,
