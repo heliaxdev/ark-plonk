@@ -9,13 +9,13 @@
 use crate::constraint_system::{
     ecc::Point, variable::Variable, StandardComposer,
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::{BigInteger, FpParameters, PrimeField};
 
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Adds a variable-base scalar multiplication to the circuit description.
     ///
@@ -105,14 +105,14 @@ mod test {
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
     use ark_ec::{
-        twisted_edwards_extended::GroupAffine as TEGroupAffine, AffineCurve,
-        TEModelParameters,
+        short_weierstrass_jacobian::GroupAffine as SWGroupAffine, AffineCurve,
+        SWModelParameters,
     };
 
     fn test_var_base_scalar_mul<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -127,9 +127,9 @@ mod test {
                 let secret_scalar = composer.add_input(scalar);
 
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
-                let generator = TEGroupAffine::new(x, y);
+                let generator = SWGroupAffine::new(x, y, false);
 
-                let expected_point: TEGroupAffine<P> = AffineCurve::mul(
+                let expected_point: SWGroupAffine<P> = AffineCurve::mul(
                     &generator,
                     util::to_embedded_curve_scalar::<F, P>(scalar),
                 )
@@ -153,7 +153,7 @@ mod test {
         [test_var_base_scalar_mul],
         [] => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -162,7 +162,7 @@ mod test {
         [test_var_base_scalar_mul],
         [] => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

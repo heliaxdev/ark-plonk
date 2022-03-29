@@ -12,7 +12,7 @@ use crate::{
     prelude::StandardComposer,
     proof_system::{Proof, Prover, ProverKey, Verifier, VerifierKey},
 };
-use ark_ec::models::TEModelParameters;
+use ark_ec::models::SWModelParameters;
 use ark_ff::{Field, PrimeField, ToConstraintField};
 use ark_serialize::*;
 
@@ -116,7 +116,7 @@ where
 /// use ark_bls12_381::{Bls12_381, Fr as BlsScalar};
 /// use ark_ec::PairingEngine;
 /// use ark_ec::models::twisted_edwards_extended::GroupAffine;
-/// use ark_ec::{TEModelParameters, AffineCurve, ProjectiveCurve};
+/// use ark_ec::{SWModelParameters, AffineCurve, ProjectiveCurve};
 /// use ark_ed_on_bls12_381::{
 ///     EdwardsAffine as JubJubAffine, EdwardsParameters as JubJubParameters,
 ///     EdwardsProjective as JubJubProjective, Fr as JubJubScalar,
@@ -144,7 +144,7 @@ where
 /// pub struct TestCircuit<F, P>
 /// where
 ///     F: PrimeField,
-///     P: TEModelParameters<BaseField = F>,
+///     P: SWModelParameters<BaseField = F>,
 /// {
 ///        a: F,
 ///        b: F,
@@ -157,7 +157,7 @@ where
 /// impl<F, P> Circuit<F, P> for TestCircuit<F, P>
 /// where
 ///     F: PrimeField,
-///     P: TEModelParameters<BaseField = F>,
+///     P: SWModelParameters<BaseField = F>,
 ///    {
 ///        const CIRCUIT_ID: [u8; 32] = [0xff; 32];
 ///
@@ -263,7 +263,7 @@ where
 pub trait Circuit<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Circuit identifier associated constant.
     const CIRCUIT_ID: [u8; 32];
@@ -329,7 +329,7 @@ where
     ) -> Result<Proof<F, PC>, Error>
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let circuit_size = self.padded_circuit_size();
@@ -366,7 +366,7 @@ pub fn verify_proof<F, P, PC>(
 ) -> Result<(), Error>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     let mut verifier: Verifier<F, P, PC> = Verifier::new(transcript_init);
@@ -415,7 +415,7 @@ mod test {
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
     use ark_ec::{
-        twisted_edwards_extended::GroupAffine, AffineCurve, PairingEngine,
+        short_weierstrass_jacobian::GroupAffine, AffineCurve, PairingEngine,
         ProjectiveCurve,
     };
     use ark_ff::{FftField, PrimeField};
@@ -429,7 +429,7 @@ mod test {
     // 5) JubJub::GENERATOR * e(JubJubScalar) = f where F is a PI
     #[derive(derivative::Derivative)]
     #[derivative(Debug(bound = ""), Default(bound = ""))]
-    pub struct TestCircuit<F: FftField, P: TEModelParameters<BaseField = F>> {
+    pub struct TestCircuit<F: FftField, P: SWModelParameters<BaseField = F>> {
         a: F,
         b: F,
         c: F,
@@ -441,7 +441,7 @@ mod test {
     impl<F, P> Circuit<F, P> for TestCircuit<F, P>
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         const CIRCUIT_ID: [u8; 32] = [0xff; 32];
 
@@ -470,7 +470,7 @@ mod test {
             let e = composer
                 .add_input(util::from_embedded_curve_scalar::<F, P>(self.e));
             let (x, y) = P::AFFINE_GENERATOR_COEFFS;
-            let generator = GroupAffine::new(x, y);
+            let generator = GroupAffine::new(x, y, false);
             let scalar_mul_result =
                 composer.fixed_base_scalar_mul(e, generator);
 
@@ -487,7 +487,7 @@ mod test {
     fn test_full<F, P, PC>() -> Result<(), Error>
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
         VerifierData<F, PC>: PartialEq,
     {
@@ -501,7 +501,7 @@ mod test {
         let (pk_p, verifier_data) = circuit.compile::<PC>(&pp)?;
 
         let (x, y) = P::AFFINE_GENERATOR_COEFFS;
-        let generator: GroupAffine<P> = GroupAffine::new(x, y);
+        let generator: GroupAffine<P> = GroupAffine::new(x, y, false);
         let point_f_pi: GroupAffine<P> = AffineCurve::mul(
             &generator,
             P::ScalarField::from(2u64).into_repr(),
@@ -562,7 +562,7 @@ mod test {
     fn test_full_on_Bls12_381() -> Result<(), Error> {
         test_full::<
             <Bls12_381 as PairingEngine>::Fr,
-            ark_ed_on_bls12_381::EdwardsParameters,
+            ark_ed_on_bls12_381::CurveParameters,
             crate::commitment::KZG10<Bls12_381>,
         >()
     }
@@ -572,7 +572,7 @@ mod test {
     fn test_full_on_Bls12_381_ipa() -> Result<(), Error> {
         test_full::<
             <Bls12_381 as PairingEngine>::Fr,
-            ark_ed_on_bls12_381::EdwardsParameters,
+            ark_ed_on_bls12_381::CurveParameters,
             crate::commitment::IPA<
                 <Bls12_381 as PairingEngine>::G1Affine,
                 blake2::Blake2b,
@@ -585,7 +585,7 @@ mod test {
     fn test_full_on_Bls12_377() -> Result<(), Error> {
         test_full::<
             <Bls12_377 as PairingEngine>::Fr,
-            ark_ed_on_bls12_377::EdwardsParameters,
+            ark_ed_on_bls12_377::CurveParameters,
             crate::commitment::KZG10<Bls12_377>,
         >()
     }
@@ -594,9 +594,22 @@ mod test {
     fn test_full_on_Bls12_377_ipa() -> Result<(), Error> {
         test_full::<
             <Bls12_377 as PairingEngine>::Fr,
-            ark_ed_on_bls12_377::EdwardsParameters,
+            ark_ed_on_bls12_377::CurveParameters,
             crate::commitment::IPA<
                 <Bls12_377 as PairingEngine>::G1Affine,
+                blake2::Blake2b,
+            >,
+        >()
+    }   
+    
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_full_on_pallas_ipa() -> Result<(), Error> {
+        test_full::<
+            ark_pallas::Fr,
+            ark_vesta::VestaParameters,
+            crate::commitment::IPA<
+                ark_pallas::GroupAffine,
                 blake2::Blake2b,
             >,
         >()

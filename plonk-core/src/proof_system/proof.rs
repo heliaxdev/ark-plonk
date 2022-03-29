@@ -24,7 +24,7 @@ use crate::{
     transcript::TranscriptProtocol,
     util::EvaluationDomainExt,
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 
 use ark_ff::{fields::batch_inversion, FftField, PrimeField};
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
@@ -109,7 +109,7 @@ where
         pub_inputs: &[F],
     ) -> Result<(), Error>
     where
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         let domain =
             GeneralEvaluationDomain::<F>::new(plonk_verifier_key.n).ok_or(Error::InvalidEvalDomainSize {
@@ -392,7 +392,7 @@ where
         plonk_verifier_key: &PlonkVerifierKey<F, PC>,
     ) -> PC::Commitment
     where
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         let mut scalars = Vec::with_capacity(6);
         let mut points = Vec::with_capacity(6);
@@ -532,7 +532,7 @@ mod test {
     fn test_serde_proof<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
         Proof<F, PC>: std::fmt::Debug + PartialEq,
     {
@@ -556,14 +556,14 @@ mod test {
     batch_test_kzg!(
         [test_serde_proof],
         [] => (
-            Bls12_381, ark_ed_on_bls12_381::EdwardsParameters
+            Bls12_381, ark_ed_on_bls12_381::CurveParameters
         )
     );
     // Bls12-377 tests
     batch_test_kzg!(
         [test_serde_proof],
         [] => (
-            Bls12_377, ark_ed_on_bls12_377::EdwardsParameters
+            Bls12_377, ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

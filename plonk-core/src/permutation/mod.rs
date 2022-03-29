@@ -769,7 +769,7 @@ mod test {
     };
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
-    use ark_ec::TEModelParameters;
+    use ark_ec::SWModelParameters;
     use ark_ff::{Field, PrimeField};
     use ark_poly::univariate::DensePolynomial;
     use ark_poly::Polynomial;
@@ -778,7 +778,7 @@ mod test {
     fn test_multizip_permutation_poly<F, P>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         let mut cs: StandardComposer<F, P> =
             StandardComposer::<F, P>::with_expected_size(4);
@@ -1347,7 +1347,7 @@ mod test {
         []
         => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -1358,7 +1358,7 @@ mod test {
         []
         => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

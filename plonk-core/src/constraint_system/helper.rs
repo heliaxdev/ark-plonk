@@ -10,7 +10,7 @@ use crate::{
     error::{to_pc_error, Error},
     proof_system::{Prover, Verifier},
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use rand::rngs::OsRng;
 
 use ark_ff::PrimeField;
@@ -22,7 +22,7 @@ pub(crate) fn dummy_gadget<F, P>(
     composer: &mut StandardComposer<F, P>,
 ) where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let one = F::one();
     let var_one = composer.add_input(one);
@@ -42,7 +42,7 @@ pub(crate) fn gadget_tester<F, P, PC>(
 ) -> Result<crate::proof_system::Proof<F, PC>, Error>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     // Common View

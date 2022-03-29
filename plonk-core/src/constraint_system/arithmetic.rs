@@ -7,7 +7,7 @@
 //! Simple Arithmetic Gates
 
 use crate::constraint_system::{StandardComposer, Variable};
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::PrimeField;
 
 #[derive(Debug, Clone, Copy)]
@@ -97,7 +97,7 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Function used to generate any arithmetic gate with fan-in-2 or fan-in-3.
     pub fn arithmetic_gate<Fn>(&mut self, func: Fn) -> Variable
@@ -182,7 +182,7 @@ mod test {
     fn test_public_inputs<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -221,7 +221,7 @@ mod test {
     fn test_correct_add_mul_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -265,7 +265,7 @@ mod test {
     fn test_correct_add_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -289,7 +289,7 @@ mod test {
     fn test_correct_big_add_mul_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -329,7 +329,7 @@ mod test {
     fn test_correct_big_arith_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -362,7 +362,7 @@ mod test {
     fn test_incorrect_big_arith_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -395,7 +395,7 @@ mod test {
     fn test_incorrect_add_mul_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -437,7 +437,7 @@ mod test {
             test_incorrect_big_arith_gate
         ],
         [] => (
-            Bls12_381, ark_ed_on_bls12_381::EdwardsParameters
+            Bls12_381, ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -453,7 +453,7 @@ mod test {
             test_incorrect_big_arith_gate
         ],
         [] => (
-            Bls12_377, ark_ed_on_bls12_377::EdwardsParameters
+            Bls12_377, ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

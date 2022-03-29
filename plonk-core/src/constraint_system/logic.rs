@@ -10,13 +10,13 @@
 //! `AND` gate.
 
 use crate::constraint_system::{StandardComposer, Variable, WireData};
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::{BigInteger, PrimeField};
 
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Performs a logical AND or XOR op between the inputs provided for the
     /// specified number of bits.
@@ -351,12 +351,12 @@ mod test {
     };
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
-    use ark_ec::TEModelParameters;
+    use ark_ec::SWModelParameters;
     use ark_ff::PrimeField;
     fn test_logic_xor_and_constraint<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // Should pass since the XOR result is correct and the bit-num is even.
@@ -432,7 +432,7 @@ mod test {
     fn test_logical_gate_odd_bit_num<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // Should fail since the bit-num is odd.
@@ -453,7 +453,7 @@ mod test {
         [test_logic_xor_and_constraint],
         [test_logical_gate_odd_bit_num]
         => (
-            Bls12_381, ark_ed_on_bls12_381::EdwardsParameters      )
+            Bls12_381, ark_ed_on_bls12_381::CurveParameters      )
     );
 
     // Test for Bls12_377
@@ -461,6 +461,6 @@ mod test {
         [test_logic_xor_and_constraint],
         [test_logical_gate_odd_bit_num]
         => (
-            Bls12_377, ark_ed_on_bls12_377::EdwardsParameters       )
+            Bls12_377, ark_ed_on_bls12_377::CurveParameters       )
     );
 }

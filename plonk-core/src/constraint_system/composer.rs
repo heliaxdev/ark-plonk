@@ -17,7 +17,7 @@
 use crate::{constraint_system::Variable, permutation::Permutation};
 use alloc::collections::BTreeMap;
 
-use ark_ec::{models::TEModelParameters, ModelParameters};
+use ark_ec::{models::SWModelParameters, ModelParameters};
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
 use hashbrown::HashMap;
@@ -145,7 +145,7 @@ where
 impl<F, P> Default for StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     #[inline]
     fn default() -> Self {
@@ -156,7 +156,7 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Generates a new empty `StandardComposer` with all of it's fields
     /// set to hold an initial capacity of 0.
@@ -713,7 +713,7 @@ mod test {
     fn test_initial_circuit_size<F, P>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         // NOTE: Circuit size is n+3 because
         // - We have an extra gate which forces the first witness to be zero.
@@ -729,7 +729,7 @@ mod test {
     fn test_prove_verify<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // NOTE: Does nothing except add the dummy constraints.
@@ -741,7 +741,7 @@ mod test {
     fn test_correct_is_zero_with_output<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // Check that it gives true on zero input:
@@ -770,7 +770,7 @@ mod test {
     fn test_correct_is_eq_with_output<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // Check that it gives true on equal inputs:
@@ -805,7 +805,7 @@ mod test {
     fn test_conditional_select<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -833,7 +833,7 @@ mod test {
     fn test_multiple_proofs<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let u_params = PC::setup(2 * 30, None, &mut OsRng).unwrap();
@@ -884,7 +884,7 @@ mod test {
         ],
         [] => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
 
         )
     );
@@ -896,7 +896,7 @@ mod test {
         ],
         [] => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 
@@ -911,7 +911,7 @@ mod test {
         ],
         [] => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -926,7 +926,7 @@ mod test {
         ],
         [] => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

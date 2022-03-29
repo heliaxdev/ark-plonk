@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use ark_ec::{ModelParameters, TEModelParameters};
+use ark_ec::{ModelParameters, SWModelParameters};
 use ark_ff::{BigInteger, FftField, Field, FpParameters, PrimeField};
 use ark_poly::{EvaluationDomain, GeneralEvaluationDomain};
 
@@ -95,7 +95,7 @@ pub fn from_embedded_curve_scalar<F, P>(
 ) -> F
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let scalar_repr = embedded_scalar.into_repr();
     let modulus = <<F as PrimeField>::Params as FpParameters>::MODULUS;
@@ -122,7 +122,7 @@ where
 pub(crate) fn to_embedded_curve_scalar<F, P>(pfc_scalar: F) -> P::ScalarField
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let scalar_repr = pfc_scalar.into_repr();
     let modulus =

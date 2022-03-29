@@ -14,7 +14,7 @@ use crate::{
         GateValues, ProverKey,
     },
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::{FftField, PrimeField};
 use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain,
@@ -42,7 +42,7 @@ pub fn compute<F, P>(
 ) -> Result<DensePolynomial<F>, Error>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let domain_8n = GeneralEvaluationDomain::<F>::new(8 * domain.size())
         .ok_or(Error::InvalidEvalDomainSize {
@@ -149,7 +149,7 @@ fn compute_gate_constraint_satisfiability<F, P>(
 ) -> Result<Vec<F>, Error>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let domain_8n = GeneralEvaluationDomain::<F>::new(8 * domain.size())
         .ok_or(Error::InvalidEvalDomainSize {

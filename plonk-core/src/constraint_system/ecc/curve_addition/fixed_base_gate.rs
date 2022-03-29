@@ -7,7 +7,7 @@
 //! Fixed-Base Curve Addition Gate
 
 use crate::constraint_system::{StandardComposer, Variable};
-use ark_ec::models::TEModelParameters;
+use ark_ec::models::SWModelParameters;
 use ark_ff::PrimeField;
 
 /// Contains all of the components needed to verify that a bit scalar
@@ -16,7 +16,7 @@ use ark_ff::PrimeField;
 #[derivative(Clone, Copy, Debug)]
 pub struct WnafRound<P>
 where
-    P: TEModelParameters,
+    P: SWModelParameters,
 {
     /// This is the accumulated x coordinate point that we wish to add (so
     /// far, it depends on where you are in the scalar mul) it is linked to
@@ -50,7 +50,7 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Generates a new structure for preparing a [`WnafRound`] ROUND.
     pub(crate) fn new_wnaf(

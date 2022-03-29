@@ -16,7 +16,7 @@ use crate::{
     },
     transcript::TranscriptProtocol,
 };
-use ark_ec::{ModelParameters, TEModelParameters};
+use ark_ec::{ModelParameters, SWModelParameters};
 use ark_ff::PrimeField;
 use ark_poly::{
     univariate::{DensePolynomial, SparsePolynomial},
@@ -51,7 +51,7 @@ where
 impl<F, P, PC> Prover<F, P, PC>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     /// Creates a new `Prover` instance.
@@ -564,7 +564,7 @@ where
 impl<F, P, PC> Default for Prover<F, P, PC>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     #[inline]

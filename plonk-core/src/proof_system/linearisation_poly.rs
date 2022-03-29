@@ -15,7 +15,7 @@ use crate::{
     },
     util::EvaluationDomainExt,
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::{Field, PrimeField};
 use ark_poly::{
     univariate::DensePolynomial, EvaluationDomain, GeneralEvaluationDomain,
@@ -122,7 +122,7 @@ pub fn compute<F, P>(
 ) -> Result<(DensePolynomial<F>, Evaluations<F>), Error>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let quot_eval = t_x_poly.evaluate(z_challenge);
     let a_eval = w_l_poly.evaluate(z_challenge);
@@ -229,7 +229,7 @@ fn compute_gate_constraint_satisfiability<F, P>(
 ) -> DensePolynomial<F>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     let values = GateValues {
         left: a_eval,

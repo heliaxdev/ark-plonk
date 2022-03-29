@@ -59,12 +59,12 @@ mod test {
     };
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
-    use ark_ec::TEModelParameters;
+    use ark_ec::SWModelParameters;
 
     fn test_correct_bool_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -82,7 +82,7 @@ mod test {
     fn test_incorrect_bool_gate<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -104,7 +104,7 @@ mod test {
             test_incorrect_bool_gate
         ],
         [] => (
-            Bls12_381, ark_ed_on_bls12_381::EdwardsParameters
+            Bls12_381, ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -115,6 +115,6 @@ mod test {
             test_incorrect_bool_gate
         ],
         [] => (
-            Bls12_377, ark_ed_on_bls12_377::EdwardsParameters        )
+            Bls12_377, ark_ed_on_bls12_377::CurveParameters        )
     );
 }

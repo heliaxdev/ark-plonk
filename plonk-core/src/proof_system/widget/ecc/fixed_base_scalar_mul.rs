@@ -19,7 +19,7 @@
 //! base2 bit.
 
 use crate::proof_system::widget::{GateConstraint, GateValues};
-use ark_ec::{ModelParameters, TEModelParameters};
+use ark_ec::{ModelParameters, SWModelParameters};
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
 
@@ -34,7 +34,7 @@ where
 impl<F, P> GateConstraint<F> for FixedBaseScalarMul<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     #[inline]
     fn constraints(separation_challenge: F, values: GateValues<F>) -> F {
@@ -68,13 +68,13 @@ where
 
         // x accumulator consistency check
         let x_3 = acc_x_next;
-        let lhs = x_3 + (x_3 * xy_alpha * acc_x * acc_y * P::COEFF_D);
+        let lhs = x_3 + (x_3 * xy_alpha * acc_x * acc_y * P::COEFF_A);//TODO
         let rhs = (x_alpha * acc_y) + (y_alpha * acc_x);
         let x_acc_consistency = (lhs - rhs) * kappa_sq;
 
         // y accumulator consistency check
         let y_3 = acc_y_next;
-        let lhs = y_3 - (y_3 * xy_alpha * acc_x * acc_y * P::COEFF_D);
+        let lhs = y_3 - (y_3 * xy_alpha * acc_x * acc_y * P::COEFF_B);//TODO
         let rhs = (x_alpha * acc_x) + (y_alpha * acc_y);
         let y_acc_consistency = (lhs - rhs) * kappa_cu;
 

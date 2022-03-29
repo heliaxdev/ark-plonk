@@ -7,7 +7,7 @@
 //! Elliptic Curve Point Addition Gate
 
 use crate::proof_system::widget::{GateConstraint, GateValues};
-use ark_ec::{ModelParameters, TEModelParameters};
+use ark_ec::{ModelParameters, SWModelParameters};
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
 
@@ -22,7 +22,7 @@ where
 impl<F, P> GateConstraint<F> for CurveAddition<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     #[inline]
     fn constraints(separation_challenge: F, values: GateValues<F>) -> F {
@@ -45,12 +45,12 @@ where
 
         // Check that `x_3` is correct
         let x3_lhs = x1_y2 + y1_x2;
-        let x3_rhs = x_3 + (x_3 * P::COEFF_D * x1_y2 * y1_x2);
+        let x3_rhs = x_3 + (x_3 * P::COEFF_A * x1_y2 * y1_x2);//TODO
         let x3_consistency = (x3_lhs - x3_rhs) * kappa;
 
         // Check that `y_3` is correct
         let y3_lhs = y1_y2 + x1_x2;
-        let y3_rhs = y_3 - y_3 * P::COEFF_D * x1_y2 * y1_x2;
+        let y3_rhs = y_3 - y_3 * P::COEFF_A * x1_y2 * y1_x2;//TODO
         let y3_consistency = (y3_lhs - y3_rhs) * kappa.square();
 
         (xy_consistency + x3_consistency + y3_consistency)

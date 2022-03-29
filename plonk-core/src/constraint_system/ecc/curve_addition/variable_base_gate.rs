@@ -8,14 +8,14 @@
 
 use crate::constraint_system::{ecc::Point, StandardComposer};
 use ark_ec::models::{
-    twisted_edwards_extended::GroupAffine as TEGroupAffine, TEModelParameters,
+    short_weierstrass_jacobian::GroupAffine as SWGroupAffine, SWModelParameters,
 };
 use ark_ff::PrimeField;
 
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Adds two curve points together using a curve addition gate
     /// Note that since the points are not fixed the generator is not a part of
@@ -42,8 +42,8 @@ where
         let x_2_scalar = self.variables.get(&x_2).unwrap();
         let y_2_scalar = self.variables.get(&y_2).unwrap();
 
-        let p1 = TEGroupAffine::<P>::new(*x_1_scalar, *y_1_scalar);
-        let p2 = TEGroupAffine::<P>::new(*x_2_scalar, *y_2_scalar);
+        let p1 = SWGroupAffine::<P>::new(*x_1_scalar, *y_1_scalar, false);
+        let p2 = SWGroupAffine::<P>::new(*x_2_scalar, *y_2_scalar, false);
 
         let point = p1 + p2;
         let x_3_scalar = point.x;
@@ -111,7 +111,7 @@ mod test {
     ) -> Point<P>
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         let zero = composer.zero_var;
         let x1 = point_a.x;
@@ -134,7 +134,7 @@ mod test {
             .arithmetic_gate(|gate| gate.mul(F::one()).witness(x1, x2, None));
         // d x1x2 * y1y2
         let d_x1_x2_y1_y2 = composer.arithmetic_gate(|gate| {
-            gate.mul(P::COEFF_D).witness(x1_x2, y1_y2, None)
+            gate.mul(P::COEFF_A).witness(x1_x2, y1_y2, None) // TODO
         });
 
         // x1y2 + y1x2
@@ -210,13 +210,13 @@ mod test {
     fn test_curve_addition<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
             |composer: &mut StandardComposer<F, P>| {
                 let (x, y) = P::AFFINE_GENERATOR_COEFFS;
-                let generator = TEGroupAffine::<P>::new(x, y);
+                let generator = SWGroupAffine::<P>::new(x, y, false);
                 let x_var = composer.add_input(x);
                 let y_var = composer.add_input(y);
                 let expected_point = generator + generator;
@@ -241,7 +241,7 @@ mod test {
         []
         => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -249,7 +249,7 @@ mod test {
         [test_curve_addition],
         [] => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

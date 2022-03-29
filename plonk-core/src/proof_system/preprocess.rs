@@ -13,7 +13,7 @@ use crate::{
     label_polynomial,
     proof_system::{widget, ProverKey},
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::{FftField, PrimeField};
 use ark_poly::{
     polynomial::univariate::DensePolynomial, EvaluationDomain, Evaluations,
@@ -50,7 +50,7 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Pads the circuit to the next power of two.
     ///
@@ -113,7 +113,7 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// These are the parts of preprocessing that the prover must compute
     /// Although the prover does not need the verification key, he must compute
@@ -729,7 +729,7 @@ mod test {
     fn test_pad<F, P>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         let mut composer: StandardComposer<F, P> = StandardComposer::new();
         dummy_gadget(100, &mut composer);
@@ -760,7 +760,7 @@ mod test {
         [test_pad],
         [] => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -769,7 +769,7 @@ mod test {
         [test_pad],
         [] => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

@@ -7,13 +7,13 @@
 //! Range Gate
 
 use crate::constraint_system::{StandardComposer, Variable, WireData};
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::{BigInteger, PrimeField};
 
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Adds a range-constraint gate that checks and constrains a
     /// [`Variable`] to be inside of the range \[0,num_bits\].
@@ -203,12 +203,12 @@ mod test {
     };
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
-    use ark_ec::models::TEModelParameters;
+    use ark_ec::models::SWModelParameters;
     use ark_ff::PrimeField;
     fn test_range_constraint<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // Should fail as the number is not 32 bits
@@ -246,7 +246,7 @@ mod test {
     fn test_odd_bit_range<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         // Should fail as the number we we need a even number of bits
@@ -265,7 +265,7 @@ mod test {
         [test_range_constraint],
         [test_odd_bit_range]
         => (
-            Bls12_381, ark_ed_on_bls12_381::EdwardsParameters
+            Bls12_381, ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -274,7 +274,7 @@ mod test {
         [test_range_constraint],
         [test_odd_bit_range]
         => (
-            Bls12_377, ark_ed_on_bls12_377::EdwardsParameters
+            Bls12_377, ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

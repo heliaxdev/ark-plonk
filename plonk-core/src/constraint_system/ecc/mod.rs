@@ -11,8 +11,8 @@ pub mod scalar_mul;
 
 use crate::constraint_system::{variable::Variable, StandardComposer};
 use ark_ec::{
-    twisted_edwards_extended::GroupAffine as TEGroupAffine, ModelParameters,
-    TEModelParameters,
+    short_weierstrass_jacobian::GroupAffine as SWGroupAffine, ModelParameters,
+    SWModelParameters,
 };
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
@@ -37,7 +37,7 @@ where
 impl<F, P> Point<P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Builds a new [`Point`] from `X` and `Y` coordinates.
     ///
@@ -75,17 +75,17 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Converts an embeded curve point into a constraint system Point
     /// without constraining the values
-    pub fn add_affine(&mut self, affine: TEGroupAffine<P>) -> Point<P> {
+    pub fn add_affine(&mut self, affine: SWGroupAffine<P>) -> Point<P> {
         Point::new(self.add_input(affine.x), self.add_input(affine.y))
     }
 
     /// Converts an embeded curve point into a constraint system Point
     /// without constraining the values
-    pub fn add_public_affine(&mut self, affine: TEGroupAffine<P>) -> Point<P> {
+    pub fn add_public_affine(&mut self, affine: SWGroupAffine<P>) -> Point<P> {
         let point = self.add_affine(affine);
         self.constrain_to_constant(point.x, F::zero(), Some(-affine.x));
         self.constrain_to_constant(point.y, F::zero(), Some(-affine.y));
@@ -96,7 +96,7 @@ where
     /// constrained witness value
     pub fn add_affine_to_circuit_description(
         &mut self,
-        affine: TEGroupAffine<P>,
+        affine: SWGroupAffine<P>,
     ) -> Point<P> {
         // NOTE: Not using individual gates because one of these may be zero.
         Point::new(
@@ -110,7 +110,7 @@ where
     pub fn assert_equal_public_point(
         &mut self,
         point: Point<P>,
-        public_point: TEGroupAffine<P>,
+        public_point: SWGroupAffine<P>,
     ) {
         self.constrain_to_constant(point.x, F::zero(), Some(-public_point.x));
         self.constrain_to_constant(point.y, F::zero(), Some(-public_point.y));
@@ -120,7 +120,7 @@ where
 impl<F, P> StandardComposer<F, P>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     /// Asserts that a point in the circuit is equal to another point in the
     /// circuit.
@@ -219,7 +219,7 @@ mod test {
     fn test_conditional_select_point<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         let res = gadget_tester::<F, P, PC>(
@@ -250,7 +250,7 @@ mod test {
     fn test_conditional_point_neg<F, P, PC>()
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
         PC: HomomorphicCommitment<F>,
     {
         gadget_tester::<F, P, PC>(
@@ -259,7 +259,7 @@ mod test {
                 let bit_0 = composer.zero_var();
 
                 let point =
-                    TEGroupAffine::<P>::new(F::from(10u64), F::from(20u64));
+                    SWGroupAffine::<P>::new(F::from(10u64), F::from(20u64), false);
                 let point_var = Point::new(
                     composer.add_input(point.x),
                     composer.add_input(point.y),
@@ -286,7 +286,7 @@ mod test {
         ],
         [] => (
             Bls12_381,
-            ark_ed_on_bls12_381::EdwardsParameters
+            ark_ed_on_bls12_381::CurveParameters
         )
     );
 
@@ -298,7 +298,7 @@ mod test {
         ],
         [] => (
             Bls12_377,
-            ark_ed_on_bls12_377::EdwardsParameters
+            ark_ed_on_bls12_377::CurveParameters
         )
     );
 }

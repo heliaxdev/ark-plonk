@@ -9,7 +9,7 @@
 //! PLONK Benchmarks
 
 use ark_bls12_381::{Bls12_381, Fr as BlsScalar};
-use ark_ec::{PairingEngine, TEModelParameters};
+use ark_ec::{PairingEngine, SWModelParameters};
 use ark_ed_on_bls12_381::EdwardsParameters;
 use ark_ff::{FftField, PrimeField};
 use ark_poly_commit::PolynomialCommitment;
@@ -44,7 +44,7 @@ impl<F, P> BenchCircuit<F, P> {
 impl<F, P> Circuit<F, P> for BenchCircuit<F, P>
 where
     F: FftField + PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
 {
     const CIRCUIT_ID: [u8; 32] = [0xff; 32];
 

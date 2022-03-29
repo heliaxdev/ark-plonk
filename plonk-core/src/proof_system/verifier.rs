@@ -13,7 +13,7 @@ use crate::{
     error::Error,
     proof_system::{widget::VerifierKey as PlonkVerifierKey, Proof},
 };
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::PrimeField;
 use core::marker::PhantomData;
 use merlin::Transcript;
@@ -22,7 +22,7 @@ use merlin::Transcript;
 pub struct Verifier<F, P, PC>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     /// VerificationKey which is used to verify a specific PLONK circuit
@@ -43,7 +43,7 @@ where
 impl<F, P, PC> Verifier<F, P, PC>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     /// Creates a new `Verifier` instance.
@@ -138,7 +138,7 @@ where
 impl<F, P, PC> Default for Verifier<F, P, PC>
 where
     F: PrimeField,
-    P: TEModelParameters<BaseField = F>,
+    P: SWModelParameters<BaseField = F>,
     PC: HomomorphicCommitment<F>,
 {
     #[inline]

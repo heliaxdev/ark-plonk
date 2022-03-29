@@ -517,13 +517,13 @@ mod test {
     batch_test!(
         [test_serialise_deserialise_verifier_key],
         [] => (
-            Bls12_381, ark_ed_on_bls12_381::EdwardsParameters      )
+            Bls12_381, ark_ed_on_bls12_381::CurveParameters      )
     );
 
     // Test for Bls12_377
     batch_test!(
         [test_serialise_deserialise_verifier_key],
         [] => (
-            Bls12_377, ark_ed_on_bls12_377::EdwardsParameters       )
+            Bls12_377, ark_ed_on_bls12_377::CurveParameters       )
     );
 }

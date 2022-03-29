@@ -9,7 +9,7 @@
 //! PLONK Example
 
 use ark_bls12_381::{Bls12_381, Fr as BlsScalar};
-use ark_ec::TEModelParameters;
+use ark_ec::SWModelParameters;
 use ark_ff::PrimeField;
 use ark_poly::univariate::DensePolynomial;
 use ark_poly_commit::sonic_pc::SonicKZG10;
@@ -17,10 +17,10 @@ use ark_poly_commit::PolynomialCommitment;
 use plonk::prelude::*;
 use rand::rngs::OsRng;
 
-use ark_ec::models::twisted_edwards_extended::GroupAffine;
+use ark_ec::models::short_weierstrass_jacobian::GroupAffine;
 use ark_ec::{AffineCurve, ProjectiveCurve};
 use ark_ed_on_bls12_381::{
-    EdwardsParameters as JubJubParameters, Fr as JubJubScalar,
+    CurveParameters as JubJubParameters, Fr as JubJubScalar,
 };
 use plonk_core::circuit::{verify_proof, Circuit, PublicInputBuilder};
 use plonk_core::constraint_system::StandardComposer;
@@ -38,7 +38,7 @@ fn main() -> Result<(), Error> {
     pub struct TestCircuit<F, P>
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         a: F,
         b: F,
@@ -51,7 +51,7 @@ fn main() -> Result<(), Error> {
     impl<F, P> Circuit<F, P> for TestCircuit<F, P>
     where
         F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        P: SWModelParameters<BaseField = F>,
     {
         const CIRCUIT_ID: [u8; 32] = [0xff; 32];
 
@@ -80,7 +80,7 @@ fn main() -> Result<(), Error> {
             let e =
                 composer.add_input(from_embedded_curve_scalar::<F, P>(self.e));
             let (x, y) = P::AFFINE_GENERATOR_COEFFS;
-            let generator = GroupAffine::new(x, y);
+            let generator = GroupAffine::new(x, y, false);
             let scalar_mul_result =
                 composer.fixed_base_scalar_mul(e, generator);
             // Apply the constrain
@@ -111,7 +111,7 @@ fn main() -> Result<(), Error> {
     let (pk_p, verifier_data) = circuit.compile::<PC>(&pp)?;
 
     let (x, y) = JubJubParameters::AFFINE_GENERATOR_COEFFS;
-    let generator: GroupAffine<JubJubParameters> = GroupAffine::new(x, y);
+    let generator: GroupAffine<JubJubParameters> = GroupAffine::new(x, y, false);
     let point_f_pi: GroupAffine<JubJubParameters> =
         AffineCurve::mul(&generator, JubJubScalar::from(2u64).into_repr())
             .into_affine();
