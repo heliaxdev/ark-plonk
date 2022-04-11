@@ -79,12 +79,12 @@ where
         let x1_p_x2 = x_1 + x_2;
         let y1_p_y2 = y_1 + y_2;
         
-        let x3_lhs = x_3 * (y1_p_y2*(y1_y2+b_3) + 3*x1_x2*(x1_y2 + x2_y1));
+        let x3_lhs = x_3 * (y1_p_y2*(y1_y2+b_3) + F::from(3u64)*x1_x2*(x1_y2 + x2_y1));
         let x3_rhs = (x1_y2 + x2_y1)*(y1_y2-b_3) - b_3*y1_p_y2*x1_p_x2;
         let x3_consistency = (x3_lhs - x3_rhs) * kappa;
 
-        let y3_lhs = y_3 * (y1_p_y2*(y1_y2+b_3) + 3*x1_x2*(x1_y2 + x2_y1));
-        let y3_rhs = (y1_y2 + b_3)*(y1_y2-b_3) + 3* b_3*x1_x2*x1_p_x2;
+        let y3_lhs = y_3 * (y1_p_y2*(y1_y2+b_3) + F::from(3u64)*x1_x2*(x1_y2 + x2_y1));
+        let y3_rhs = (y1_y2 + b_3)*(y1_y2-b_3) + F::from(3u64) * b_3*x1_x2*x1_p_x2;
         let y3_consistency = (y3_lhs - y3_rhs) * kappa.square();
 
         (xy_consistency + x3_consistency + y3_consistency)
