@@ -609,7 +609,7 @@ mod test {
             ark_pallas::Fr,
             ark_vesta::VestaParameters,
             crate::commitment::IPA<
-                ark_pallas::GroupAffine,
+                ark_pallas::PallasParameters::GroupAffine,
                 blake2::Blake2b,
             >,
         >()

@@ -28,7 +28,7 @@ pub type KZG10Commitment<E> = <KZG10<E> as PolynomialCommitment<
 
 impl<E> HomomorphicCommitment<E::Fr> for KZG10<E>
 where
-    E: PairingEngine,
+    E: PairingEngine, 
 {
     fn multi_scalar_mul(
         commitments: &[KZG10Commitment<E>],
