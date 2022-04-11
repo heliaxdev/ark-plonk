@@ -67,15 +67,21 @@ where
             ((bit * values.constant_selector) - xy_alpha) * kappa;
 
         // x accumulator consistency check
+        // X3 = (X1*Y2 + X2*Y1)*(Y1*Y2-3*E.a6()) - 3*E.a6()*(Y1+Y2)*(X1+X2)
+        // Z3 = (Y1+Y2)*(Y1*Y2+3*E.a6()) + 3*X1*X2*(X1*Y2 + X2*Y1)
+        // Z3 * x_3 == X3
         let x_3 = acc_x_next;
-        let lhs = x_3 + (x_3 * xy_alpha * acc_x * acc_y * P::COEFF_A);//TODO
-        let rhs = (x_alpha * acc_y) + (y_alpha * acc_x);
+        let lhs = x_3 * (acc_y+y_alpha)*(acc_y*y_alpha+3*P::COEFF_B) + x_3 * 3*acc_x*x_alpha*(acc_x*y_alpha + x_alpha*acc_y);
+        let rhs = (acc_x*y_alpha + x_alpha*acc_y)*(acc_y*y_alpha-3*P::COEFF_B) - 3*P::COEFF_B*(acc_y+y_alpha)*(acc_x+x_alpha);
         let x_acc_consistency = (lhs - rhs) * kappa_sq;
 
         // y accumulator consistency check
+        // Y3 = (Y1*Y2 + 3*E.a6())*(Y1*Y2-3*E.a6()) + 9*E.a6()*X1*X2*(X1+X2)
+        // Z3 = (Y1+Y2)*(Y1*Y2+3*E.a6()) + 3*X1*X2*(X1*Y2 + X2*Y1)
+        // Z3 * y_3 == Y3
         let y_3 = acc_y_next;
-        let lhs = y_3 - (y_3 * xy_alpha * acc_x * acc_y * P::COEFF_B);//TODO
-        let rhs = (x_alpha * acc_x) + (y_alpha * acc_y);
+        let lhs = y_3 * (acc_y+y_alpha)*(acc_y*y_alpha+3*P::COEFF_B) + y_3 * 3*acc_x*x_alpha*(acc_x*y_alpha + x_alpha*acc_y);
+        let rhs = (acc_y*y_alpha + 3*P::COEFF_B)*(acc_y*y_alpha-3*P::COEFF_B) + 9*P::COEFF_B*acc_x*x_alpha*(acc_x+x_alpha);
         let y_acc_consistency = (lhs - rhs) * kappa_cu;
 
         let checks = bit_consistency
