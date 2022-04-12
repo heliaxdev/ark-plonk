@@ -114,12 +114,18 @@ mod test {
         P: SWModelParameters<BaseField = F>,
     {
         let zero = composer.zero_var;
+        let one = composer.add_input(F::one());
         let x1 = point_a.x;
         let y1 = point_a.y;
 
         let x2 = point_b.x;
         let y2 = point_b.y;
 
+        // X3 = (X1*Y2 + X2*Y1)*(Y1*Y2-3*B) - 3*B*(Y1+Y2)*(X1+X2)
+        // Y3 = (Y1*Y2 + 3*B)*(Y1*Y2-3*B) + 9*B*X1*X2*(X1+X2)
+        // Z3 = (Y1+Y2)*(Y1*Y2+3*B) + 3*X1*X2*(X1*Y2 + X2*Y1)
+
+        // products
         // x1 * y2
         let x1_y2 = composer
             .arithmetic_gate(|gate| gate.mul(F::one()).witness(x1, y2, None));
@@ -132,76 +138,77 @@ mod test {
         // x1 * x2
         let x1_x2 = composer
             .arithmetic_gate(|gate| gate.mul(F::one()).witness(x1, x2, None));
-        // d x1x2 * y1y2
-        let d_x1_x2_y1_y2 = composer.arithmetic_gate(|gate| {
-            gate.mul(P::COEFF_A).witness(x1_x2, y1_y2, None) // TODO
+        // sums
+        // x1 + x2
+        let x1_p_x2 = composer.arithmetic_gate(|gate| {
+            gate.witness(x1, x2, None).add(F::one(), F::one())
         });
-
+        // y1 + y2
+        let y1_p_y2 = composer.arithmetic_gate(|gate| {
+            gate.witness(y1, y2, None).add(F::one(), F::one())
+        });
+        // sums of products
         // x1y2 + y1x2
-        let x_numerator = composer.arithmetic_gate(|gate| {
+        let x1y2_p_y1x2 = composer.arithmetic_gate(|gate| {
             gate.witness(x1_y2, y1_x2, None).add(F::one(), F::one())
         });
-
-        // y1y2 - a * x1x2
-        let y_numerator = composer.arithmetic_gate(|gate| {
-            gate.witness(y1_y2, x1_x2, None).add(F::one(), -P::COEFF_A)
+        // y1 * y2 - 3 * B
+        let y1_y2_m_3b = composer.arithmetic_gate(|gate| {
+            gate.witness(y1_y2, one, None).add(F::one(), -F::from(3u64) * P::COEFF_B)
         });
-
-        // 1 + dx1x2y1y2
-        let x_denominator = composer.arithmetic_gate(|gate| {
-            gate.witness(d_x1_x2_y1_y2, zero, None)
-                .add(F::one(), F::zero())
-                .constant(F::one())
+        // y1 * y2 + 3 * B
+        let y1_y2_p_3b = composer.arithmetic_gate(|gate| {
+            gate.witness(y1_y2, one, None).add(F::one(), F::from(3u64) * P::COEFF_B)
         });
-
-        // Compute the inverse
-        let inv_x_denom = composer
+        // x3 = x3_beg + x3_end
+        let x3_beg = composer.arithmetic_gate(|gate| {
+            gate.witness(x1y2_p_y1x2,y1_y2_m_3b, None).add(F::one(), F::one())
+        });
+        let x3_end = composer
+        .arithmetic_gate(|gate| gate.mul(-F::from(3u64) * P::COEFF_B).witness(x1_p_x2, y1_p_y2, None));
+        let x3 = composer.arithmetic_gate(|gate| {
+            gate.witness(x3_beg, x3_end, None).add(F::one(), F::one())
+        });
+        // y3 = y3_beg + y3_end
+        let y3_beg = composer
+        .arithmetic_gate(|gate| gate.mul(F::one()).witness(y1_y2_m_3b, y1_y2_p_3b, None));
+        let y3_end = composer
+        .arithmetic_gate(|gate| gate.mul(F::from(9u64)*P::COEFF_B).witness(x1_x2, x1_p_x2, None));
+        let y3 = composer.arithmetic_gate(|gate| {
+            gate.witness(y3_beg, y3_end, None).add(F::one(), F::one())
+        });
+        // z3 = z3_beg + z3_end
+        let z3_beg = composer
+        .arithmetic_gate(|gate| gate.mul(F::one()).witness(y1_p_y2, y1_y2_p_3b, None));
+        let z3_end = composer
+        .arithmetic_gate(|gate| gate.mul(F::from(3u64)).witness(x1_x2, x1y2_p_y1x2, None));
+        let z3 = composer.arithmetic_gate(|gate| {
+            gate.witness(z3_beg, z3_end, None).add(F::one(), F::one())
+        });
+        // Compute the inverse of z3 (we are in affine coordinates)
+        let inv_z3 = composer
             .variables
-            .get(&x_denominator)
+            .get(&z3)
             .unwrap()
             .inverse()
             .unwrap();
-        let inv_x_denom = composer.add_input(inv_x_denom);
+        let inv_z3 = composer.add_input(inv_z3);
 
         // Assert that we actually have the inverse
-        // inv_x * x = 1
+        // inv_z3 * z3 = 1
         composer.arithmetic_gate(|gate| {
-            gate.witness(x_denominator, inv_x_denom, Some(zero))
+            gate.witness(z3, inv_z3, Some(zero))
                 .mul(F::one())
                 .constant(-F::one())
         });
 
-        // 1 - dx1x2y1y2
-        let y_denominator = composer.arithmetic_gate(|gate| {
-            gate.witness(d_x1_x2_y1_y2, zero, None)
-                .add(-F::one(), F::zero())
-                .constant(F::one())
-        });
-
-        let inv_y_denom = composer
-            .variables
-            .get(&y_denominator)
-            .unwrap()
-            .inverse()
-            .unwrap();
-
-        let inv_y_denom = composer.add_input(inv_y_denom);
-        // Assert that we actually have the inverse
-        // inv_y * y = 1
-        composer.arithmetic_gate(|gate| {
-            gate.mul(F::one())
-                .witness(y_denominator, inv_y_denom, Some(zero))
-                .constant(-F::one())
-        });
-
         // We can now use the inverses
-
         let x_3 = composer.arithmetic_gate(|gate| {
-            gate.mul(F::one()).witness(inv_x_denom, x_numerator, None)
+            gate.mul(F::one()).witness(inv_z3, x3, None)
         });
 
         let y_3 = composer.arithmetic_gate(|gate| {
-            gate.mul(F::one()).witness(inv_y_denom, y_numerator, None)
+            gate.mul(F::one()).witness(inv_z3, y3, None)
         });
 
         Point::new(x_3, y_3)
@@ -252,4 +259,16 @@ mod test {
             ark_ed_on_bls12_377::CurveParameters
         )
     );
+
+    #[test]
+    fn test_curve_addition_vesta() {
+        test_curve_addition::<
+            ark_pallas::Fr,
+            ark_vesta::VestaParameters,
+            crate::commitment::IPA<
+                ark_pallas::Affine,
+                blake2::Blake2b,
+            >,
+        >();
+    }
 }
