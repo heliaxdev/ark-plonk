@@ -71,7 +71,7 @@ where
         // Y3 = (y1_y2 + b_3)*(y1_y2-b_3) + 3* b_3*x1_x2*x1_p_x2
         // Z3 = y1_p_y2*(y1_y2+b_3) + 3*x1_x2*(x1_y2 + x2_y1)
 
-        let b_3 = P::COEFF_B+P::COEFF_B+P::COEFF_B;
+        let b_3 = F::from(3u64)*P::COEFF_B;
         let x1_x2 = x_1.mul(x_2);
         let y1_y2 = y_1.mul(y_2);
         let x1_y2 = x_1.mul(y_2);
