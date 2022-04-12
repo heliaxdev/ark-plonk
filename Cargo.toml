@@ -75,5 +75,7 @@ ark-ff = { git="https://github.com/heliaxdev/algebra/", branch="simon/sw-arith" 
 ark-serialize = { git="https://github.com/heliaxdev/algebra/", branch="simon/sw-arith" }
 ark-ec = { git="https://github.com/heliaxdev/algebra/", branch="simon/sw-arith" }
 ark-poly = { git="https://github.com/heliaxdev/algebra/", branch="simon/sw-arith" }
+ark-bls12-377 = { git="https://github.com/heliaxdev/curves/", branch="simon/sw-curves" }
+ark-bls12-381 = { git="https://github.com/heliaxdev/curves/", branch="simon/sw-curves" }
 ark-ed-on-bls12-377 = { git="https://github.com/heliaxdev/curves/", branch="simon/sw-curves" }
 ark-ed-on-bls12-381 = { git="https://github.com/heliaxdev/curves/", branch="simon/sw-curves" }
