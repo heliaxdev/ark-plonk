@@ -42,8 +42,8 @@ where
         let x_2_scalar = self.variables.get(&x_2).unwrap();
         let y_2_scalar = self.variables.get(&y_2).unwrap();
 
-        let p1 = SWGroupAffine::<P>::new(*x_1_scalar, *y_1_scalar, false);
-        let p2 = SWGroupAffine::<P>::new(*x_2_scalar, *y_2_scalar, false);
+        let p1 = SWGroupAffine::<P>::new(*x_1_scalar, *y_1_scalar, x_1_scalar.is_zero() && y_1_scalar.is_zero());
+        let p2 = SWGroupAffine::<P>::new(*x_2_scalar, *y_2_scalar, x_2_scalar.is_zero() && y_2_scalar.is_zero());
 
         let point = p1 + p2;
         let x_3_scalar = point.x;
@@ -98,6 +98,7 @@ mod test {
     use crate::{batch_test, constraint_system::helper::*};
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
+    use ark_ff::Zero;
 
     use crate::commitment::HomomorphicCommitment;
 
@@ -161,9 +162,8 @@ mod test {
             gate.witness(y1_y2, one, None).add(F::one(), F::from(3u64) * P::COEFF_B)
         });
         // x3 = x3_beg + x3_end
-        let x3_beg = composer.arithmetic_gate(|gate| {
-            gate.witness(x1y2_p_y1x2,y1_y2_m_3b, None).add(F::one(), F::one())
-        });
+        let x3_beg = composer
+            .arithmetic_gate(|gate| gate.mul(F::one()).witness(x1y2_p_y1x2, y1_y2_m_3b, None));
         let x3_end = composer
         .arithmetic_gate(|gate| gate.mul(-F::from(3u64) * P::COEFF_B).witness(x1_p_x2, y1_p_y2, None));
         let x3 = composer.arithmetic_gate(|gate| {
@@ -227,8 +227,8 @@ mod test {
                 let x_var = composer.add_input(x);
                 let y_var = composer.add_input(y);
                 let expected_point = generator + generator;
-                let point_a = Point::new(x_var, y_var);
-                let point_b = Point::new(x_var, y_var);
+                let point_a: Point<P> = Point::new(x_var, y_var);
+                let point_b: Point<P> = Point::new(x_var, y_var);
 
                 let point = composer.point_addition_gate(point_a, point_b);
                 let point2 =
@@ -237,6 +237,40 @@ mod test {
                 composer.assert_equal_point(point, point2);
 
                 composer.assert_equal_public_point(point, expected_point);
+            },
+            2000,
+        );
+        assert!(res.is_ok());
+    }
+
+    fn test_curve_addition_with_identity<F, P, PC>()
+    where
+        F: PrimeField,
+        P: SWModelParameters<BaseField = F>,
+        PC: HomomorphicCommitment<F>,
+    {
+        let res = gadget_tester::<F, P, PC>(
+            |composer: &mut StandardComposer<F, P>| {
+                let (x, y) = P::AFFINE_GENERATOR_COEFFS;
+                let generator = SWGroupAffine::<P>::new(x, y, false);
+                let x_var = composer.add_input(x);
+                let y_var = composer.add_input(y);
+                let identity = SWGroupAffine::<P>::zero();
+                let x_id = composer.add_input(identity.x);
+                let y_id = composer.add_input(identity.y);
+                let expected_point = generator + identity;
+                let point_a = Point::<P>::new(x_var, y_var);
+                let point_b = Point::<P>::new(x_id, y_id);
+
+                println!("1");
+                let point = composer.point_addition_gate(point_a, point_b);
+                println!("2");
+                // let point2 =
+                //     classical_point_addition(composer, point_a, point_b);
+
+                // composer.assert_equal_point(point, point2);
+
+                // composer.assert_equal_public_point(point, expected_point);
             },
             2000,
         );
@@ -263,6 +297,18 @@ mod test {
     #[test]
     fn test_curve_addition_vesta() {
         test_curve_addition::<
+            ark_pallas::Fr,
+            ark_vesta::VestaParameters,
+            crate::commitment::IPA<
+                ark_pallas::Affine,
+                blake2::Blake2b,
+            >,
+        >();
+    }
+
+    #[test]
+    fn test_curve_addition_with_identity_vesta() {
+        test_curve_addition_with_identity::<
             ark_pallas::Fr,
             ark_vesta::VestaParameters,
             crate::commitment::IPA<

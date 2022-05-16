@@ -245,7 +245,8 @@ where
         PC: HomomorphicCommitment<F>,
     {
         let (_, selectors, domain) =
-            self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
+            // self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
+            self.preprocess_shared(commit_key, transcript, _pc)?;
 
         let domain_8n =
             GeneralEvaluationDomain::new(8 * domain.size()).ok_or(Error::InvalidEvalDomainSize {
@@ -376,8 +377,10 @@ where
     where
         PC: HomomorphicCommitment<F>,
     {
+        // let (verifier_key, _, _) =
+            // self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
         let (verifier_key, _, _) =
-            self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
+            self.preprocess_shared(commit_key, transcript, _pc)?;
         Ok(verifier_key)
     }
 
@@ -604,13 +607,13 @@ where
             (domain.size(), F::one()),
         ])
         .into();
-        // /!\ WARNING: we blind with `b0 * Z_H(X)` only /!\
-        q_m_poly = q_m_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]]) * &z_h;
-        q_r_poly = q_r_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]]) * &z_h;
-        q_l_poly = q_l_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]]) * &z_h;
-        q_o_poly = q_o_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]]) * &z_h;
-        q_c_poly = q_c_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]]) * &z_h;
-        q_4_poly = q_4_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]]) * &z_h;
+        // // /!\ WARNING: we blind with `b0 * Z_H(X)` only /!\
+        // q_m_poly = q_m_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]]) * &z_h;
+        // q_r_poly = q_r_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]]) * &z_h;
+        // q_l_poly = q_l_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]]) * &z_h;
+        // q_o_poly = q_o_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]]) * &z_h;
+        // q_c_poly = q_c_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]]) * &z_h;
+        // q_4_poly = q_4_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]]) * &z_h;
         
         // 2. Compute the sigma polynomials
         let (

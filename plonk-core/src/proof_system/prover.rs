@@ -284,11 +284,11 @@ where
         let mut w_4_poly =
             DensePolynomial::from_coefficients_vec(domain.ifft(w_4_scalar));
 
-        // Add blinders
-        w_l_poly = Self::add_blinder(&w_l_poly, n, 1);
-        w_r_poly = Self::add_blinder(&w_r_poly, n, 1);
-        w_o_poly = Self::add_blinder(&w_o_poly, n, 1);
-        w_4_poly = Self::add_blinder(&w_4_poly, n, 1);
+        // // Add blinders
+        // w_l_poly = Self::add_blinder(&w_l_poly, n, 1);
+        // w_r_poly = Self::add_blinder(&w_r_poly, n, 1);
+        // w_o_poly = Self::add_blinder(&w_o_poly, n, 1);
+        // w_4_poly = Self::add_blinder(&w_4_poly, n, 1);
         let w_polys = [
             label_polynomial!(w_l_poly),
             label_polynomial!(w_r_poly),

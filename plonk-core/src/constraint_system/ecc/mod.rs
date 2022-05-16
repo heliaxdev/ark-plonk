@@ -56,9 +56,7 @@ where
 
     /// Returns an identity point.
     pub fn identity(composer: &mut StandardComposer<P::BaseField, P>) -> Self {
-        let one =
-            composer.add_witness_to_circuit_description(P::BaseField::one());
-        Self::new(composer.zero_var, one)
+        Self::new(composer.zero_var, composer.zero_var)
     }
 
     /// Returns the `X`-coordinate of `self`.
@@ -201,7 +199,7 @@ where
     ) -> Point<P> {
         Point::new(
             self.conditional_select_zero(bit, point.x),
-            self.conditional_select_one(bit, point.y),
+            self.conditional_select_zero(bit, point.y),
         )
     }
 }

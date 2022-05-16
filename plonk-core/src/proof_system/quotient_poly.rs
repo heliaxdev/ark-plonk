@@ -84,6 +84,7 @@ where
     let wo_eval_8n = domain_8n.coset_fft(w_o_poly);
 
     let mut w4_eval_8n = domain_8n.coset_fft(w_4_poly);
+    
     w4_eval_8n.push(w4_eval_8n[0]);
     w4_eval_8n.push(w4_eval_8n[1]);
     w4_eval_8n.push(w4_eval_8n[2]);
