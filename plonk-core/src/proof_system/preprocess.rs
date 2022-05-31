@@ -242,6 +242,130 @@ where
         ))
     }
 
+    /// These are the parts of preprocessing that the prover must compute
+    /// Although the prover does not need the verification key, he must compute
+    /// the commitments in order to seed the transcript, allowing both the
+    /// prover and verifier to have the same view
+    pub fn preprocess_prover_with_blinding<PC>(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        transcript: &mut Transcript,
+        _pc: PhantomData<PC>,
+        blinding_values: [F;20],
+    ) -> Result<ProverKey<F>, Error>
+    where
+        PC: HomomorphicCommitment<F>,
+    {
+        let (_, selectors, domain, preprocessed_table) =
+            self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
+
+        let domain_4n =
+            GeneralEvaluationDomain::new(4 * domain.size()).ok_or(Error::InvalidEvalDomainSize {
+                log_size_of_group: (4 * domain.size()).trailing_zeros(),
+                adicity:
+                    <<F as FftField>::FftParams as ark_ff::FftParameters>::TWO_ADICITY,
+            })?;
+        let q_m_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_m),
+            domain_4n,
+        );
+        let q_l_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_l),
+            domain_4n,
+        );
+        let q_r_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_r),
+            domain_4n,
+        );
+        let q_o_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_o),
+            domain_4n,
+        );
+        let q_c_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_c),
+            domain_4n,
+        );
+        let q_4_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_4),
+            domain_4n,
+        );
+        let q_arith_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_arith),
+            domain_4n,
+        );
+        let q_range_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_range),
+            domain_4n,
+        );
+        let q_logic_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_logic),
+            domain_4n,
+        );
+        let q_lookup_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_lookup),
+            domain_4n,
+        );
+        let q_fixed_group_add_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_fixed_group_add),
+            domain_4n,
+        );
+        let q_variable_group_add_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.q_variable_group_add),
+            domain_4n,
+        );
+        let left_sigma_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.left_sigma),
+            domain_4n,
+        );
+        let right_sigma_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.right_sigma),
+            domain_4n,
+        );
+        let out_sigma_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.out_sigma),
+            domain_4n,
+        );
+        let fourth_sigma_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&selectors.fourth_sigma),
+            domain_4n,
+        );
+        // XXX: Remove this and compute it on the fly
+        let linear_eval_4n = Evaluations::from_vec_and_domain(
+            domain_4n.coset_fft(&[F::zero(), F::one()]),
+            domain_4n,
+        );
+
+        // Compute 4n evaluations for X^n -1
+        let v_h_coset_4n =
+            compute_vanishing_poly_over_coset(domain_4n, domain.size() as u64);
+
+        Ok(ProverKey::from_polynomials_and_evals(
+            domain.size(),
+            (selectors.q_m, q_m_eval_4n),
+            (selectors.q_l, q_l_eval_4n),
+            (selectors.q_r, q_r_eval_4n),
+            (selectors.q_o, q_o_eval_4n),
+            (selectors.q_4, q_4_eval_4n),
+            (selectors.q_c, q_c_eval_4n),
+            (selectors.q_arith, q_arith_eval_4n),
+            (selectors.q_range, q_range_eval_4n),
+            (selectors.q_logic, q_logic_eval_4n),
+            (selectors.q_lookup, q_lookup_eval_4n),
+            (selectors.q_fixed_group_add, q_fixed_group_add_eval_4n),
+            (selectors.q_variable_group_add, q_variable_group_add_eval_4n),
+            (selectors.left_sigma, left_sigma_eval_4n),
+            (selectors.right_sigma, right_sigma_eval_4n),
+            (selectors.out_sigma, out_sigma_eval_4n),
+            (selectors.fourth_sigma, fourth_sigma_eval_4n),
+            linear_eval_4n,
+            v_h_coset_4n,
+            preprocessed_table.t[0].0.clone(),
+            preprocessed_table.t[1].0.clone(),
+            preprocessed_table.t[2].0.clone(),
+            preprocessed_table.t[3].0.clone(),
+        ))
+    }
+
     /// The verifier only requires the commitments in order to verify a
     /// [`Proof`](super::Proof) We can therefore speed up preprocessing for the
     /// verifier by skipping the FFTs needed to compute the 4n evaluations.
@@ -256,6 +380,24 @@ where
     {
         let (verifier_key, _, _, _) =
             self.preprocess_shared(commit_key, transcript, _pc)?;
+        Ok(verifier_key)
+    }
+
+    /// The verifier only requires the commitments in order to verify a
+    /// [`Proof`](super::Proof) We can therefore speed up preprocessing for the
+    /// verifier by skipping the FFTs needed to compute the 4n evaluations.
+    pub fn preprocess_verifier_with_blinding<PC>(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        transcript: &mut Transcript,
+        _pc: PhantomData<PC>,
+        blinding_values: [F;20],
+    ) -> Result<widget::VerifierKey<F, PC>, Error>
+    where
+        PC: HomomorphicCommitment<F>,
+    {
+        let (verifier_key, _, _, _) =
+            self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
         Ok(verifier_key)
     }
 
@@ -339,6 +481,186 @@ where
             DensePolynomial::from_coefficients_vec(
                 domain.ifft(&self.q_variable_group_add),
             );
+
+        // 2. Compute the sigma polynomials
+        let (
+            left_sigma_poly,
+            right_sigma_poly,
+            out_sigma_poly,
+            fourth_sigma_poly,
+        ) = self.perm.compute_sigma_polynomials(self.n, &domain);
+
+        let (commitments, _) = PC::commit(
+            commit_key,
+            [
+                label_polynomial!(q_m_poly),
+                label_polynomial!(q_l_poly),
+                label_polynomial!(q_r_poly),
+                label_polynomial!(q_o_poly),
+                label_polynomial!(q_4_poly),
+                label_polynomial!(q_c_poly),
+                label_polynomial!(q_arith_poly),
+                label_polynomial!(q_range_poly),
+                label_polynomial!(q_logic_poly),
+                label_polynomial!(q_lookup_poly),
+                label_polynomial!(q_fixed_group_add_poly),
+                label_polynomial!(q_variable_group_add_poly),
+                label_polynomial!(left_sigma_poly),
+                label_polynomial!(right_sigma_poly),
+                label_polynomial!(out_sigma_poly),
+                label_polynomial!(fourth_sigma_poly),
+            ]
+            .iter(),
+            None,
+        )
+        .map_err(to_pc_error::<F, PC>)?;
+
+        let verifier_key = widget::VerifierKey::from_polynomial_commitments(
+            self.n,
+            commitments[0].commitment().clone(), // q_m
+            commitments[1].commitment().clone(), // q_l
+            commitments[2].commitment().clone(), // q_r
+            commitments[3].commitment().clone(), // q_o
+            commitments[4].commitment().clone(), // q_4
+            commitments[5].commitment().clone(), // q_c
+            commitments[6].commitment().clone(), // q_arith
+            commitments[7].commitment().clone(), // q_range
+            commitments[8].commitment().clone(), // q_logic
+            commitments[9].commitment().clone(), // q_lookup
+            commitments[10].commitment().clone(), // q_fixed_group_add
+            commitments[11].commitment().clone(), // q_variable_group_add
+            commitments[12].commitment().clone(), // left_sigma
+            commitments[13].commitment().clone(), // right_sigma
+            commitments[14].commitment().clone(), // out_sigma
+            commitments[15].commitment().clone(), // fourth_sigma
+            preprocessed_table.t[0].1.clone(),
+            preprocessed_table.t[1].1.clone(),
+            preprocessed_table.t[2].1.clone(),
+            preprocessed_table.t[3].1.clone(),
+        );
+
+        let selectors = SelectorPolynomials {
+            q_m: q_m_poly,
+            q_l: q_l_poly,
+            q_r: q_r_poly,
+            q_o: q_o_poly,
+            q_c: q_c_poly,
+            q_4: q_4_poly,
+            q_arith: q_arith_poly,
+            q_range: q_range_poly,
+            q_logic: q_logic_poly,
+            q_lookup: q_lookup_poly,
+            q_fixed_group_add: q_fixed_group_add_poly,
+            q_variable_group_add: q_variable_group_add_poly,
+            left_sigma: left_sigma_poly,
+            right_sigma: right_sigma_poly,
+            out_sigma: out_sigma_poly,
+            fourth_sigma: fourth_sigma_poly,
+        };
+
+        // Add the circuit description to the transcript
+        verifier_key.seed_transcript(transcript);
+
+        Ok((verifier_key, selectors, domain, preprocessed_table))
+    }
+
+    /// Both the [`Prover`](super::Prover) and [`Verifier`](super::Verifier)
+    /// must perform IFFTs on the selector polynomials and permutation
+    /// polynomials in order to commit to them and have the same transcript
+    /// view.
+    #[allow(clippy::type_complexity)] // FIXME: Add struct for prover side (last two tuple items).
+    fn preprocess_shared_with_blinding<PC>(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        transcript: &mut Transcript,
+        _pc: PhantomData<PC>,
+        blinding_values: [F;20],
+    ) -> Result<
+        (
+            widget::VerifierKey<F, PC>,
+            SelectorPolynomials<F>,
+            GeneralEvaluationDomain<F>,
+            PreprocessedLookupTable<F, PC>,
+        ),
+        Error,
+    >
+    where
+        PC: HomomorphicCommitment<F>,
+    {
+        let domain = GeneralEvaluationDomain::new(self.circuit_bound()).ok_or(Error::InvalidEvalDomainSize {
+            log_size_of_group: (self.circuit_bound()).trailing_zeros(),
+            adicity:
+                <<F as FftField>::FftParams as ark_ff::FftParameters>::TWO_ADICITY,
+        })?;
+
+        let preprocessed_table = PreprocessedLookupTable::<F, PC>::preprocess(
+            &self.lookup_table,
+            commit_key,
+            domain.size() as u32,
+        )
+        .unwrap();
+
+        // Check that the length of the wires is consistent.
+        self.check_poly_same_len()?;
+
+        // 1. Pad circuit to a power of two
+        self.pad(domain.size() as usize - self.n);
+
+        let mut q_m_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_m));
+
+        let mut q_r_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_r));
+
+        let mut q_l_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_l));
+
+        let mut q_o_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_o));
+
+        let mut q_c_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_c));
+
+        let mut q_4_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_4));
+
+        let q_arith_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_arith));
+
+        let q_range_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_range));
+
+        let q_logic_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_logic));
+
+        let q_lookup_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_lookup));
+
+        let q_fixed_group_add_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(
+                domain.ifft(&self.q_fixed_group_add),
+            );
+
+        let q_variable_group_add_poly: DensePolynomial<F> =
+            DensePolynomial::from_coefficients_vec(
+                domain.ifft(&self.q_variable_group_add),
+            );
+
+        // blinding
+        use ark_poly::univariate::SparsePolynomial;
+        let z_h: DensePolynomial<F> =
+        SparsePolynomial::from_coefficients_slice(&[
+            (0, -F::one()),
+            (domain.size(), F::one()),
+        ])
+        .into();
+        // /!\ WARNING: we blind with `b0 * Z_H(X)` only /!\
+        q_m_poly = q_m_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]]) * &z_h;
+        q_r_poly = q_r_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]]) * &z_h;
+        q_l_poly = q_l_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]]) * &z_h;
+        q_o_poly = q_o_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]]) * &z_h;
+        q_c_poly = q_c_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]]) * &z_h;
+        q_4_poly = q_4_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]]) * &z_h;
 
         // 2. Compute the sigma polynomials
         let (
