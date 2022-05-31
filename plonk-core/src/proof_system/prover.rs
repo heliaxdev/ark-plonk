@@ -102,6 +102,25 @@ where
         Ok(())
     }
 
+    /// Preprocesses the underlying constraint system.
+    pub fn preprocess_with_blinding(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        blinding_values: [F;20],
+    ) -> Result<(), Error> {
+        if self.prover_key.is_some() {
+            return Err(Error::CircuitAlreadyPreprocessed);
+        }
+        let pk = self.cs.preprocess_prover_with_blinding(
+            commit_key,
+            &mut self.preprocessed_transcript,
+            PhantomData::<PC>,
+            blinding_values,
+        )?;
+        self.prover_key = Some(pk);
+        Ok(())
+    }
+
     /// Split `t(X)` poly into 4 n-sized polynomials.
     #[allow(clippy::type_complexity)] // NOTE: This is an ok type for internal use.
     fn split_tx_poly(

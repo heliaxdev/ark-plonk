@@ -93,6 +93,25 @@ where
         Ok(())
     }
 
+    /// Preprocess a circuit to obtain a [`PlonkVerifierKey<F, PC>`] and a
+    /// circuit descriptor so that the `Verifier` instance can verify
+    /// [`Proof`]s for this circuit descriptor instance.
+    pub fn preprocess_with_blinding(
+        &mut self,
+        commit_key: &PC::CommitterKey,
+        blinding_values: [F; 20],
+    ) -> Result<(), Error> {
+        let vk = self.cs.preprocess_verifier_with_blinding(
+            commit_key,
+            &mut self.preprocessed_transcript,
+            PhantomData::<PC>,
+            blinding_values,
+        )?;
+
+        self.verifier_key = Some(vk);
+        Ok(())
+    }
+
     /// Keys the [`Transcript`] with additional seed information
     /// Wrapper around [`Transcript::append_message`].
     ///
