@@ -46,7 +46,7 @@ std = [
 trace = []
 
 # Tracing Printing Features
-trace-print = ["trace"]
+trace-print = ["trace", "std"]
 
 [dependencies]
 ark-bls12-381 = "0.3"
@@ -73,4 +73,4 @@ criterion = "0.3"
 paste = "1.0.6"
 rand = "0.8.0"
 tempdir = "0.3"
-
+cfg-if = "0.1"
