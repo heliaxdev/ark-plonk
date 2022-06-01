@@ -251,13 +251,18 @@ where
         commit_key: &PC::CommitterKey,
         transcript: &mut Transcript,
         _pc: PhantomData<PC>,
-        blinding_values: [F;20],
+        blinding_values: [F; 20],
     ) -> Result<ProverKey<F>, Error>
     where
         PC: HomomorphicCommitment<F>,
     {
-        let (_, selectors, domain, preprocessed_table) =
-            self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
+        let (_, selectors, domain, preprocessed_table) = self
+            .preprocess_shared_with_blinding(
+                commit_key,
+                transcript,
+                _pc,
+                blinding_values,
+            )?;
 
         let domain_4n =
             GeneralEvaluationDomain::new(4 * domain.size()).ok_or(Error::InvalidEvalDomainSize {
@@ -391,13 +396,17 @@ where
         commit_key: &PC::CommitterKey,
         transcript: &mut Transcript,
         _pc: PhantomData<PC>,
-        blinding_values: [F;20],
+        blinding_values: [F; 20],
     ) -> Result<widget::VerifierKey<F, PC>, Error>
     where
         PC: HomomorphicCommitment<F>,
     {
-        let (verifier_key, _, _, _) =
-            self.preprocess_shared_with_blinding(commit_key, transcript, _pc, blinding_values)?;
+        let (verifier_key, _, _, _) = self.preprocess_shared_with_blinding(
+            commit_key,
+            transcript,
+            _pc,
+            blinding_values,
+        )?;
         Ok(verifier_key)
     }
 
@@ -574,7 +583,7 @@ where
         commit_key: &PC::CommitterKey,
         transcript: &mut Transcript,
         _pc: PhantomData<PC>,
-        blinding_values: [F;20],
+        blinding_values: [F; 20],
     ) -> Result<
         (
             widget::VerifierKey<F, PC>,
@@ -649,18 +658,30 @@ where
         // blinding
         use ark_poly::univariate::SparsePolynomial;
         let z_h: DensePolynomial<F> =
-        SparsePolynomial::from_coefficients_slice(&[
-            (0, -F::one()),
-            (domain.size(), F::one()),
-        ])
-        .into();
+            SparsePolynomial::from_coefficients_slice(&[
+                (0, -F::one()),
+                (domain.size(), F::one()),
+            ])
+            .into();
         // /!\ WARNING: we blind with `b0 * Z_H(X)` only /!\
-        q_m_poly = q_m_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]]) * &z_h;
-        q_r_poly = q_r_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]]) * &z_h;
-        q_l_poly = q_l_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]]) * &z_h;
-        q_o_poly = q_o_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]]) * &z_h;
-        q_c_poly = q_c_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]]) * &z_h;
-        q_4_poly = q_4_poly + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]]) * &z_h;
+        q_m_poly = q_m_poly
+            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]])
+                * &z_h;
+        q_r_poly = q_r_poly
+            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]])
+                * &z_h;
+        q_l_poly = q_l_poly
+            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]])
+                * &z_h;
+        q_o_poly = q_o_poly
+            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]])
+                * &z_h;
+        q_c_poly = q_c_poly
+            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]])
+                * &z_h;
+        q_4_poly = q_4_poly
+            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]])
+                * &z_h;
 
         // 2. Compute the sigma polynomials
         let (

@@ -106,7 +106,7 @@ where
     pub fn preprocess_with_blinding(
         &mut self,
         commit_key: &PC::CommitterKey,
-        blinding_values: [F;20],
+        blinding_values: [F; 20],
     ) -> Result<(), Error> {
         if self.prover_key.is_some() {
             return Err(Error::CircuitAlreadyPreprocessed);
