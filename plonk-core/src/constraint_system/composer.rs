@@ -799,7 +799,7 @@ mod test {
     use super::*;
     use crate::{
         batch_test, batch_test_field_params,
-        commitment::HomomorphicCommitment,
+        commitment::{HomomorphicCommitment, KZG10},
         constraint_system::helper::*,
         proof_system::{Prover, Verifier},
     };
@@ -1026,4 +1026,57 @@ mod test {
             ark_ed_on_bls12_377::EdwardsParameters
         )
     );
+
+    fn test_blinded_circuit_proof_verify<F, P, PC>()
+    where
+        F: PrimeField,
+        P: TEModelParameters<BaseField = F>,
+        PC: HomomorphicCommitment<F>,
+    {
+        let u_params = PC::setup(2 * 30, None, &mut OsRng).unwrap();
+
+        // Create a prover struct
+        let mut prover: Prover<F, P, PC> = Prover::new(b"demo");
+
+        // Add gadgets
+        dummy_gadget(10, prover.mut_cs());
+
+        // Commit Key
+        let (ck, vk) = PC::trim(&u_params, 2 * 20, 0, None).unwrap();
+
+        // blinding values
+        let mut rng = ark_std::test_rng();
+        let blinding_values = [F::rand(&mut rng); 20];
+        // Preprocess circuit
+        prover
+            .preprocess_with_blinding(&ck, blinding_values)
+            .unwrap();
+
+        let public_inputs = prover.cs.get_pi().clone();
+
+        let proof = prover.prove(&ck).unwrap();
+
+        // Verifier
+        //
+        let mut verifier = Verifier::<F, P, PC>::new(b"demo");
+
+        // Add gadgets
+        dummy_gadget(10, verifier.mut_cs());
+
+        // Preprocess
+        verifier
+            .preprocess_with_blinding(&ck, blinding_values)
+            .unwrap();
+
+        assert!(verifier.verify(&proof, &vk, &public_inputs).is_ok());
+    }
+
+    #[test]
+    fn test_blinded_circuit_bls12_377() {
+        test_blinded_circuit_proof_verify::<
+            ark_ed_on_bls12_377::Fq,
+            ark_ed_on_bls12_377::EdwardsParameters,
+            KZG10<ark_bls12_377::Bls12_377>,
+        >();
+    }
 }
