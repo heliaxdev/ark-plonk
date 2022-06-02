@@ -21,4 +21,13 @@ rustdoc-args = ["--cfg", "doc_cfg"]
 std = []
 
 [dependencies]
-plonk-core = { path = "../plonk-core" }
+plonk-core = { path = "../plonk-core", features = ["trace"]}
+ark-ff = { version = "0.3", default-features = false }
+ark-ec = { version = "0.3", default-features = false }
+thiserror = "1.0.30"
+derivative = { version = "2.2.0", default-features = false, features = ["use_core"] }
+
+[dev-dependencies]
+ark-bls12-377 = { git="https://github.com/simonmasson/curves/", branch="new-curve-models" }
+ark-ed-on-bls12-377 = { git="https://github.com/simonmasson/curves/", branch="new-curve-models" }
+ark-std = "0.3"
