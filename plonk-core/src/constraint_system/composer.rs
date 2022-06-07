@@ -88,7 +88,7 @@ where
 
     /// Sparse representation of the Public Inputs linking the positions of the
     /// non-zero ones to it's actual values.
-    pub(crate) public_inputs: PublicInputs<F>,
+    pub public_inputs: PublicInputs<F>,
 
     // Witness vectors
     /// Left wire witness vector.
