@@ -254,6 +254,47 @@ where
         ))
     }
 
+    /// Compiles the circuit by using a function that returns a `Result`
+    /// with the [`ProverKey`], [`VerifierKey`] and the circuit size.
+    #[allow(clippy::type_complexity)] // NOTE: Clippy is too harsh here.
+    fn compile_with_blinding<PC>(
+        &mut self,
+        u_params: &PC::UniversalParams,
+        blinding_values: [F; 20],
+    ) -> Result<(ProverKey<F>, VerifierKey<F, PC>), Error>
+    where
+        F: PrimeField,
+        PC: HomomorphicCommitment<F>,
+    {
+        // Setup PublicParams
+        let circuit_size = self.padded_circuit_size();
+        let (ck, _) = PC::trim(u_params, circuit_size, 0, None)
+            .map_err(to_pc_error::<F, PC>)?;
+
+        //Generate & save `ProverKey` with some random values.
+        let mut prover = Prover::<F, P, PC>::new(b"CircuitCompilation");
+        self.gadget(prover.mut_cs())?;
+        prover.cs.public_inputs.update_size(prover.circuit_bound());
+        prover.preprocess_with_blinding(&ck, blinding_values)?;
+
+        // Generate & save `VerifierKey` with some random values.
+        let mut verifier = Verifier::new(b"CircuitCompilation");
+        self.gadget(verifier.mut_cs())?;
+        verifier
+            .cs
+            .public_inputs
+            .update_size(verifier.circuit_bound());
+        verifier.preprocess_with_blinding(&ck, blinding_values)?;
+        Ok((
+            prover
+                .prover_key
+                .expect("Unexpected error. Missing ProverKey in compilation"),
+            verifier
+                .verifier_key
+                .expect("Unexpected error. Missing VerifierKey in compilation"),
+        ))
+    }
+
     /// Generates a proof using the provided [`ProverKey`] and
     /// [`ark_poly_commit::PCUniversalParams`]. Returns a
     /// [`crate::proof_system::Proof`] and the [`PublicInputs`].
