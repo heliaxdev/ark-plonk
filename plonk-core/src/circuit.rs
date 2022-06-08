@@ -274,16 +274,11 @@ where
         //Generate & save `ProverKey` with some random values.
         let mut prover = Prover::<F, P, PC>::new(b"CircuitCompilation");
         self.gadget(prover.mut_cs())?;
-        prover.cs.public_inputs.update_size(prover.circuit_bound());
         prover.preprocess_with_blinding(&ck, blinding_values)?;
 
         // Generate & save `VerifierKey` with some random values.
         let mut verifier = Verifier::new(b"CircuitCompilation");
         self.gadget(verifier.mut_cs())?;
-        verifier
-            .cs
-            .public_inputs
-            .update_size(verifier.circuit_bound());
         verifier.preprocess_with_blinding(&ck, blinding_values)?;
         Ok((
             prover
