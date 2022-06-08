@@ -792,6 +792,44 @@ where
             assert_eq!(k, F::zero(), "Check failed at gate {}", i,);
         }
     }
+
+    /// Get the field element value from variable
+    pub fn get_value(&self, value: &Variable) -> F {
+        self.variables.get(value).unwrap().clone()
+    }
+
+    /// Add a variable to a circuit and constrain it to a public input.
+    pub fn add_public_input_variable(&mut self, value: F) -> Variable {
+        let variable = self.add_input(value);
+        self.poly_gate(
+            variable,
+            variable,
+            variable,
+            F::zero(),
+            -F::one(),
+            F::zero(),
+            F::zero(),
+            F::zero(),
+            Some(value),
+        );
+        variable
+    }
+
+    /// Make the variable to be public input.
+    pub fn public_inputize(&mut self, variable: &Variable) {
+        let value_scalar = self.get_value(variable);
+        self.poly_gate(
+            *variable,
+            *variable,
+            *variable,
+            F::zero(),
+            -F::one(),
+            F::zero(),
+            F::zero(),
+            F::zero(),
+            Some(value_scalar),
+        );
+    }
 }
 
 #[cfg(test)]
