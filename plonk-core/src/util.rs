@@ -121,7 +121,7 @@ where
 /// friendly curve. Panics if the pairing frindly curve scalar is greater than
 /// the modulus of the embedded curve scalar field
 #[allow(dead_code)]
-pub(crate) fn to_embedded_curve_scalar<F, P>(pfc_scalar: F) -> P::ScalarField
+pub fn to_embedded_curve_scalar<F, P>(pfc_scalar: F) -> P::ScalarField
 where
     F: PrimeField,
     P: TEModelParameters<BaseField = F>,
