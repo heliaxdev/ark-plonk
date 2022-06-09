@@ -15,4 +15,5 @@ pub use crate::{
     error::Error,
     proof_system::{Proof, ProverKey, VerifierKey},
     util::from_embedded_curve_scalar,
+    util::to_embedded_curve_scalar,
 };
