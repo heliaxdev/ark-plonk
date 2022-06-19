@@ -260,7 +260,7 @@ where
     fn compile_with_blinding<PC>(
         &mut self,
         u_params: &PC::UniversalParams,
-        blinding_values: [F; 20],
+        blinding: &crate::proof_system::Blinding<F>,
     ) -> Result<(ProverKey<F>, VerifierKey<F, PC>), Error>
     where
         F: PrimeField,
@@ -274,12 +274,12 @@ where
         //Generate & save `ProverKey` with some random values.
         let mut prover = Prover::<F, P, PC>::new(b"CircuitCompilation");
         self.gadget(prover.mut_cs())?;
-        prover.preprocess_with_blinding(&ck, blinding_values)?;
+        prover.preprocess_with_blinding(&ck, blinding)?;
 
         // Generate & save `VerifierKey` with some random values.
         let mut verifier = Verifier::new(b"CircuitCompilation");
         self.gadget(verifier.mut_cs())?;
-        verifier.preprocess_with_blinding(&ck, blinding_values)?;
+        verifier.preprocess_with_blinding(&ck, blinding)?;
         Ok((
             prover
                 .prover_key

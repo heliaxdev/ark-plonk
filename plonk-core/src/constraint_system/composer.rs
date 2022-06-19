@@ -851,7 +851,7 @@ mod test {
         batch_test, batch_test_field_params,
         commitment::{HomomorphicCommitment, KZG10},
         constraint_system::helper::*,
-        proof_system::{Prover, Verifier},
+        proof_system::{Blinding, Prover, Verifier},
     };
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
@@ -1095,12 +1095,11 @@ mod test {
         let (ck, vk) = PC::trim(&u_params, 2 * 20, 0, None).unwrap();
 
         // blinding values
-        let mut rng = ark_std::test_rng();
-        let blinding_values = [F::rand(&mut rng); 20];
+        let rng = &mut ark_std::test_rng();
+        use ark_std::UniformRand;
+        let blinding = &Blinding::<F>::rand(rng);
         // Preprocess circuit
-        prover
-            .preprocess_with_blinding(&ck, blinding_values)
-            .unwrap();
+        prover.preprocess_with_blinding(&ck, blinding).unwrap();
 
         let public_inputs = prover.cs.get_pi().clone();
 
@@ -1114,9 +1113,7 @@ mod test {
         dummy_gadget(10, verifier.mut_cs());
 
         // Preprocess
-        verifier
-            .preprocess_with_blinding(&ck, blinding_values)
-            .unwrap();
+        verifier.preprocess_with_blinding(&ck, blinding).unwrap();
 
         assert!(verifier.verify(&proof, &vk, &public_inputs).is_ok());
     }
