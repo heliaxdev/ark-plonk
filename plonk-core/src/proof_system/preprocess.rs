@@ -48,6 +48,56 @@ where
     out_sigma: DensePolynomial<F>,
     fourth_sigma: DensePolynomial<F>,
 }
+/// Struct that contains all of the blinding values for a preprocessed [`ProverKey`]
+///
+/// [`ProverKey`]: ProverKey
+pub struct Blinding<F>
+where
+    F: FftField,
+{
+    q_m: F,
+    q_l: F,
+    q_r: F,
+    q_o: F,
+    q_c: F,
+    q_4: F,
+    q_arith: F,
+    q_range: F,
+    q_logic: F,
+    q_lookup: F,
+    q_fixed_group_add: F,
+    q_variable_group_add: F,
+    left_sigma: F,
+    right_sigma: F,
+    out_sigma: F,
+    fourth_sigma: F,
+}
+
+impl<F> ark_std::UniformRand for Blinding<F>
+where
+    F: FftField,
+{
+    fn rand<R: ark_std::rand::Rng + ?Sized>(rng: &mut R) -> Self {
+        Blinding::<F> {
+            q_m: F::rand(rng),
+            q_l: F::rand(rng),
+            q_r: F::rand(rng),
+            q_o: F::rand(rng),
+            q_c: F::rand(rng),
+            q_4: F::rand(rng),
+            q_arith: F::rand(rng),
+            q_range: F::rand(rng),
+            q_logic: F::rand(rng),
+            q_lookup: F::rand(rng),
+            q_fixed_group_add: F::rand(rng),
+            q_variable_group_add: F::rand(rng),
+            left_sigma: F::rand(rng),
+            right_sigma: F::rand(rng),
+            out_sigma: F::rand(rng),
+            fourth_sigma: F::rand(rng),
+        }
+    }
+}
 
 impl<F, P> StandardComposer<F, P>
 where
@@ -251,17 +301,14 @@ where
         commit_key: &PC::CommitterKey,
         transcript: &mut Transcript,
         _pc: PhantomData<PC>,
-        blinding_values: [F; 20],
+        blinding: &Blinding<F>,
     ) -> Result<ProverKey<F>, Error>
     where
         PC: HomomorphicCommitment<F>,
     {
         let (_, selectors, domain, preprocessed_table) = self
             .preprocess_shared_with_blinding(
-                commit_key,
-                transcript,
-                _pc,
-                blinding_values,
+                commit_key, transcript, _pc, blinding,
             )?;
 
         let domain_4n =
@@ -396,16 +443,13 @@ where
         commit_key: &PC::CommitterKey,
         transcript: &mut Transcript,
         _pc: PhantomData<PC>,
-        blinding_values: [F; 20],
+        blinding: &Blinding<F>,
     ) -> Result<widget::VerifierKey<F, PC>, Error>
     where
         PC: HomomorphicCommitment<F>,
     {
         let (verifier_key, _, _, _) = self.preprocess_shared_with_blinding(
-            commit_key,
-            transcript,
-            _pc,
-            blinding_values,
+            commit_key, transcript, _pc, blinding,
         )?;
         Ok(verifier_key)
     }
@@ -583,7 +627,7 @@ where
         commit_key: &PC::CommitterKey,
         transcript: &mut Transcript,
         _pc: PhantomData<PC>,
-        blinding_values: [F; 20],
+        blinding: &Blinding<F>,
     ) -> Result<
         (
             widget::VerifierKey<F, PC>,
@@ -615,81 +659,67 @@ where
         // 1. Pad circuit to a power of two
         self.pad(domain.size() as usize - self.n);
 
-        let mut q_m_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_m));
+        let poly =
+            |evals| DensePolynomial::from_coefficients_vec(domain.ifft(evals));
+        let mut q_m_poly: DensePolynomial<F> = poly(&self.q_m);
 
-        let mut q_r_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_r));
+        let mut q_r_poly: DensePolynomial<F> = poly(&self.q_r);
 
-        let mut q_l_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_l));
+        let mut q_l_poly: DensePolynomial<F> = poly(&self.q_l);
 
-        let mut q_o_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_o));
+        let mut q_o_poly: DensePolynomial<F> = poly(&self.q_o);
 
-        let mut q_c_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_c));
+        let mut q_c_poly: DensePolynomial<F> = poly(&self.q_c);
 
-        let mut q_4_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_4));
+        let mut q_4_poly: DensePolynomial<F> = poly(&self.q_4);
 
-        let q_arith_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_arith));
+        let mut q_arith_poly: DensePolynomial<F> = poly(&self.q_arith);
 
-        let q_range_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_range));
+        let mut q_range_poly: DensePolynomial<F> = poly(&self.q_range);
 
-        let q_logic_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_logic));
+        let mut q_logic_poly: DensePolynomial<F> = poly(&self.q_logic);
 
-        let q_lookup_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(domain.ifft(&self.q_lookup));
+        let mut q_lookup_poly: DensePolynomial<F> = poly(&self.q_lookup);
 
-        let q_fixed_group_add_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(
-                domain.ifft(&self.q_fixed_group_add),
-            );
+        let mut q_fixed_group_add_poly: DensePolynomial<F> =
+            poly(&self.q_fixed_group_add);
 
-        let q_variable_group_add_poly: DensePolynomial<F> =
-            DensePolynomial::from_coefficients_vec(
-                domain.ifft(&self.q_variable_group_add),
-            );
+        let mut q_variable_group_add_poly: DensePolynomial<F> =
+            poly(&self.q_variable_group_add);
 
         // blinding
-        use ark_poly::univariate::SparsePolynomial;
-        let z_h: DensePolynomial<F> =
-            SparsePolynomial::from_coefficients_slice(&[
-                (0, -F::one()),
-                (domain.size(), F::one()),
-            ])
-            .into();
+        let z_h: DensePolynomial<F> = domain.vanishing_polynomial().into();
+
         // /!\ WARNING: we blind with `b0 * Z_H(X)` only /!\
-        q_m_poly = q_m_poly
-            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[0]])
-                * &z_h;
-        q_r_poly = q_r_poly
-            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[1]])
-                * &z_h;
-        q_l_poly = q_l_poly
-            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[2]])
-                * &z_h;
-        q_o_poly = q_o_poly
-            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[3]])
-                * &z_h;
-        q_c_poly = q_c_poly
-            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[4]])
-                * &z_h;
-        q_4_poly = q_4_poly
-            + &DensePolynomial::from_coefficients_vec(vec![blinding_values[5]])
-                * &z_h;
+        q_m_poly = q_m_poly + &z_h * blinding.q_m;
+        q_r_poly = q_r_poly + &z_h * blinding.q_r;
+        q_l_poly = q_l_poly + &z_h * blinding.q_l;
+        q_o_poly = q_o_poly + &z_h * blinding.q_o;
+        q_c_poly = q_c_poly + &z_h * blinding.q_c;
+        q_4_poly = q_4_poly + &z_h * blinding.q_4;
+        q_arith_poly = q_arith_poly + &z_h * blinding.q_arith;
+        q_range_poly = q_range_poly + &z_h * blinding.q_range;
+        q_logic_poly = q_logic_poly + &z_h * blinding.q_logic;
+        q_lookup_poly = q_lookup_poly + &z_h * blinding.q_lookup;
+        q_fixed_group_add_poly =
+            q_fixed_group_add_poly + &z_h * blinding.q_fixed_group_add;
+        q_variable_group_add_poly =
+            q_variable_group_add_poly + &z_h * blinding.q_variable_group_add;
 
         // 2. Compute the sigma polynomials
         let (
-            left_sigma_poly,
-            right_sigma_poly,
-            out_sigma_poly,
-            fourth_sigma_poly,
+            mut left_sigma_poly,
+            mut right_sigma_poly,
+            mut out_sigma_poly,
+            mut fourth_sigma_poly,
         ) = self.perm.compute_sigma_polynomials(self.n, &domain);
+
+        /*
+        left_sigma_poly = left_sigma_poly + &z_h * blinding.left_sigma;
+        right_sigma_poly = right_sigma_poly + &z_h * blinding.right_sigma;
+        out_sigma_poly = out_sigma_poly + &z_h * blinding.out_sigma;
+        fourth_sigma_poly = fourth_sigma_poly + &z_h * blinding.fourth_sigma;
+        */
 
         let (commitments, _) = PC::commit(
             commit_key,

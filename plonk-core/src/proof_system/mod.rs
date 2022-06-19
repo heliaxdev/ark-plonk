@@ -21,3 +21,5 @@ pub use proof::*;
 pub use prover::Prover;
 pub use verifier::Verifier;
 pub use widget::*;
+
+pub use preprocess::Blinding;

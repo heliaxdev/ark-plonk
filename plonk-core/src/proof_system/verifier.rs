@@ -99,13 +99,13 @@ where
     pub fn preprocess_with_blinding(
         &mut self,
         commit_key: &PC::CommitterKey,
-        blinding_values: [F; 20],
+        blinding: &super::preprocess::Blinding<F>,
     ) -> Result<(), Error> {
         let vk = self.cs.preprocess_verifier_with_blinding(
             commit_key,
             &mut self.preprocessed_transcript,
             PhantomData::<PC>,
-            blinding_values,
+            blinding,
         )?;
 
         self.verifier_key = Some(vk);
