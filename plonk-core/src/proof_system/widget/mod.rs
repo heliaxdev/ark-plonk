@@ -154,7 +154,7 @@ where
     pub(crate) n: usize,
 
     /// Arithmetic Verifier Key
-    pub(crate) arithmetic: arithmetic::VerifierKey<F, PC>,
+    pub arithmetic: arithmetic::VerifierKey<F, PC>,
 
     /// Range Gate Selector Commitment
     pub(crate) range_selector_commitment: PC::Commitment,
