@@ -55,22 +55,38 @@ pub struct Blinding<F>
 where
     F: FftField,
 {
-    q_m: F,
-    q_l: F,
-    q_r: F,
-    q_o: F,
-    q_c: F,
-    q_4: F,
-    q_arith: F,
-    q_range: F,
-    q_logic: F,
-    q_lookup: F,
-    q_fixed_group_add: F,
-    q_variable_group_add: F,
-    left_sigma: F,
-    right_sigma: F,
-    out_sigma: F,
-    fourth_sigma: F,
+    /// blinder
+    pub q_m: F,
+    /// blinder
+    pub q_l: F,
+    /// blinder
+    pub q_r: F,
+    /// blinder
+    pub q_o: F,
+    /// blinder
+    pub q_c: F,
+    /// blinder
+    pub q_4: F,
+    /// blinder
+    pub q_arith: F,
+    /// blinder
+    pub q_range: F,
+    /// blinder
+    pub q_logic: F,
+    /// blinder
+    pub q_lookup: F,
+    /// blinder
+    pub q_fixed_group_add: F,
+    /// blinder
+    pub q_variable_group_add: F,
+    /// blinder
+    pub left_sigma: F,
+    /// blinder
+    pub right_sigma: F,
+    /// blinder
+    pub out_sigma: F,
+    /// blinder
+    pub fourth_sigma: F,
 }
 
 impl<F> ark_std::UniformRand for Blinding<F>
@@ -662,28 +678,17 @@ where
         let poly =
             |evals| DensePolynomial::from_coefficients_vec(domain.ifft(evals));
         let mut q_m_poly: DensePolynomial<F> = poly(&self.q_m);
-
         let mut q_r_poly: DensePolynomial<F> = poly(&self.q_r);
-
         let mut q_l_poly: DensePolynomial<F> = poly(&self.q_l);
-
         let mut q_o_poly: DensePolynomial<F> = poly(&self.q_o);
-
         let mut q_c_poly: DensePolynomial<F> = poly(&self.q_c);
-
         let mut q_4_poly: DensePolynomial<F> = poly(&self.q_4);
-
         let mut q_arith_poly: DensePolynomial<F> = poly(&self.q_arith);
-
         let mut q_range_poly: DensePolynomial<F> = poly(&self.q_range);
-
         let mut q_logic_poly: DensePolynomial<F> = poly(&self.q_logic);
-
         let mut q_lookup_poly: DensePolynomial<F> = poly(&self.q_lookup);
-
         let mut q_fixed_group_add_poly: DensePolynomial<F> =
             poly(&self.q_fixed_group_add);
-
         let mut q_variable_group_add_poly: DensePolynomial<F> =
             poly(&self.q_variable_group_add);
 
@@ -714,12 +719,10 @@ where
             mut fourth_sigma_poly,
         ) = self.perm.compute_sigma_polynomials(self.n, &domain);
 
-        /*
-        left_sigma_poly = left_sigma_poly + &z_h * blinding.left_sigma;
-        right_sigma_poly = right_sigma_poly + &z_h * blinding.right_sigma;
-        out_sigma_poly = out_sigma_poly + &z_h * blinding.out_sigma;
-        fourth_sigma_poly = fourth_sigma_poly + &z_h * blinding.fourth_sigma;
-        */
+        //left_sigma_poly = left_sigma_poly + z_h; //  * blinding.left_sigma;
+        //right_sigma_poly = right_sigma_poly + &z_h * blinding.right_sigma;
+        //out_sigma_poly = out_sigma_poly + &z_h * blinding.out_sigma;
+        //fourth_sigma_poly = fourth_sigma_poly + &z_h * blinding.fourth_sigma;
 
         let (commitments, _) = PC::commit(
             commit_key,
