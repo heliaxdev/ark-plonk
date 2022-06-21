@@ -48,6 +48,10 @@ where
     let universal_params =
         PC::setup(2 * n, None, &mut OsRng).map_err(to_pc_error::<F, PC>)?;
 
+    use ark_std::UniformRand;
+    let blinding =
+        &crate::proof_system::Blinding::<F>::rand(&mut ark_std::test_rng());
+
     // Provers View
     let (proof, public_inputs) = {
         // Create a prover struct
@@ -65,7 +69,7 @@ where
                 .map_err(to_pc_error::<F, PC>)?;
 
         // Preprocess circuit
-        prover.preprocess(&ck)?;
+        prover.preprocess_with_blinding(&ck, blinding)?;
 
         // Once the prove method is called, the public inputs are cleared
         // So pre-fetch these before calling Prove
@@ -91,7 +95,7 @@ where
             .map_err(to_pc_error::<F, PC>)?;
 
     // Preprocess circuit
-    verifier.preprocess(&ck)?;
+    verifier.preprocess_with_blinding(&ck, blinding)?;
 
     // Verify proof
     verifier.verify(&proof, &vk, &public_inputs)?;
