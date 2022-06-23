@@ -151,28 +151,28 @@ where
     PC: HomomorphicCommitment<F>,
 {
     /// Circuit size (not padded to a power of two).
-    pub(crate) n: usize,
+    pub n: usize,
 
     /// Arithmetic Verifier Key
     pub arithmetic: arithmetic::VerifierKey<F, PC>,
 
     /// Range Gate Selector Commitment
-    pub(crate) range_selector_commitment: PC::Commitment,
+    pub range_selector_commitment: PC::Commitment,
 
     /// Logic Gate Selector Commitment
-    pub(crate) logic_selector_commitment: PC::Commitment,
+    pub logic_selector_commitment: PC::Commitment,
 
     /// Fixed Group Addition Selector Commitment
-    pub(crate) fixed_group_add_selector_commitment: PC::Commitment,
+    pub fixed_group_add_selector_commitment: PC::Commitment,
 
     /// Variable Group Addition Selector Commitment
-    pub(crate) variable_group_add_selector_commitment: PC::Commitment,
+    pub variable_group_add_selector_commitment: PC::Commitment,
 
     /// VerifierKey for permutation checks
-    pub(crate) permutation: permutation::VerifierKey<PC::Commitment>,
+    pub permutation: permutation::VerifierKey<PC::Commitment>,
 
     /// VerifierKey for Lookup Gate
-    pub(crate) lookup: lookup::VerifierKey<F, PC>,
+    pub lookup: lookup::VerifierKey<F, PC>,
 }
 
 impl<F, PC> VerifierKey<F, PC>
