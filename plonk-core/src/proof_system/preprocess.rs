@@ -714,10 +714,10 @@ where
 
         // 2. Compute the sigma polynomials
         let (
-            mut left_sigma_poly,
-            mut right_sigma_poly,
-            mut out_sigma_poly,
-            mut fourth_sigma_poly,
+            left_sigma_poly,
+            right_sigma_poly,
+            out_sigma_poly,
+            fourth_sigma_poly,
         ) = self.perm.compute_sigma_polynomials(self.n, &domain);
 
         //left_sigma_poly = left_sigma_poly + z_h; //  * blinding.left_sigma;
