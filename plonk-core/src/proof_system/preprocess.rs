@@ -51,6 +51,7 @@ where
 /// Struct that contains all of the blinding values for a preprocessed [`ProverKey`]
 ///
 /// [`ProverKey`]: ProverKey
+#[derive(Default, Copy, Clone, Debug)]
 pub struct Blinding<F>
 where
     F: FftField,
