@@ -31,7 +31,7 @@ where
     pub verifier_key: Option<PlonkVerifierKey<F, PC>>,
 
     /// Circuit Description
-    pub(crate) cs: StandardComposer<F, P>,
+    pub cs: StandardComposer<F, P>,
 
     /// Store the messages exchanged during the preprocessing stage.
     ///
