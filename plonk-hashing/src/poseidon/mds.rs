@@ -179,7 +179,7 @@ pub fn factor_to_sparse_matrixes<F: PrimeField>(
 #[cfg(test)]
 mod tests {
     use crate::poseidon::{matrix::Matrix, mds::MdsMatrices};
-    use ark_bls12_377::Fr;
+    use ark_bls12_381_new::Fr;
     use ark_ff::field_new;
     use ark_std::{test_rng, UniformRand};
 

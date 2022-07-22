@@ -164,7 +164,7 @@ impl GrainLFSR {
 #[cfg(test)]
 mod tests {
     use crate::poseidon::lfsr::GrainLFSR;
-    use ark_bls12_377::Fr;
+    use ark_bls12_381_new::Fr;
     use ark_ff::field_new;
 
     #[test]
@@ -172,7 +172,7 @@ mod tests {
         // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55
         // 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
 
-        let mut lfsr = GrainLFSR::new(253, 3, 8, 55);
+        let mut lfsr = GrainLFSR::new(255, 3, 8, 55);
         assert_eq!(
             lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
             field_new!(

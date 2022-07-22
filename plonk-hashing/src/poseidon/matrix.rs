@@ -417,7 +417,7 @@ mod tests {
     use super::*;
     use ark_ff::Zero;
 
-    type Fr = ark_bls12_377::Fr;
+    type Fr = ark_bls12_381_new::Fr;
 
     #[test]
     fn test_minor() {

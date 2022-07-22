@@ -584,8 +584,8 @@ mod tests {
     use ark_ec::PairingEngine;
     use ark_std::{test_rng, UniformRand};
 
-    type E = ark_bls12_377::Bls12_377;
-    type P = ark_ed_on_bls12_377::EdwardsParameters;
+    type E = ark_bls12_381_new::Bls12_381New;
+    type P = ark_ed_on_bls12_381_new::EdwardsParameters;
     type Fr = <E as PairingEngine>::Fr;
 
     #[test]
