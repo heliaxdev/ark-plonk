@@ -258,7 +258,8 @@ mod tests {
     #[test]
     fn test_mds_creation_hardcoded() {
         // value come out from sage script
-        // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55 0x58bb7f6cf05bd874fbed5cb8c4bd3dd98595441902ad000188da7a0000000001
+        // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55
+        // 0x58bb7f6cf05bd874fbed5cb8c4bd3dd98595441902ad000188da7a0000000001
         let width = 3;
 
         let expected_mds = Matrix(vec![
