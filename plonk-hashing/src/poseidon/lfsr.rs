@@ -174,18 +174,18 @@ mod tests {
 
         let mut lfsr = GrainLFSR::new(255, 3, 8, 55);
         assert_eq!(
-            lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
-            field_new!(
-                Fr,
-                "197062428584453850050552081643643105851184297764110852263363150496355324172"
-            )
-        );
+                lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
+                field_new!(
+                    Fr,
+                    "12678502092746318913289523392430826887011664085277767208266352862540971998250"
+                )
+            );
         assert_eq!(
-            lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
-            field_new!(
-                Fr,
-                "1513787136572833847346781771185498599265647617178372934394332422269557737548"
-            )
-        );
+                lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
+                field_new!(
+                    Fr,
+                    "2984601628531025684563499708543701178678526318016879330847435430504374437980"
+                )
+            );
     }
 }
