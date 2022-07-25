@@ -170,7 +170,7 @@ mod tests {
     #[test]
     fn test_grain_lfsr_consistency() {
         // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55
-        // 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
+        // 0x58bb7f6cf05bd874fbed5cb8c4bd3dd98595441902ad000188da7a0000000001
 
         let mut lfsr = GrainLFSR::new(255, 3, 8, 55);
         assert_eq!(
