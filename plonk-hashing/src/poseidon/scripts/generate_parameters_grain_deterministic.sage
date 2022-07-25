@@ -110,7 +110,7 @@ def print_round_constants(round_constants, n, field):
 
 def print_round_constants_arkff(round_constants):
     print("Round constants for ark-ff:")
-    print("vec![" + ",".join(["field_new!(Fr, {})".format(int(entry)) for entry in round_constants]) + "]")
+    print("vec![" + ",".join(["field_new!(Fr, \"{}\")".format(int(entry)) for entry in round_constants]) + "]")
 
 def create_mds_p(n, t):
     M = matrix(F, t, t)
@@ -326,7 +326,7 @@ def print_linear_layer(M, n, t):
 def print_linear_layer_arkff(M,  t):
     matrix_string = "vec!["
     for i in range(0, t):
-        matrix_string += "vec![" + ",".join(["field_new!(Fr, {})".format(int(entry)) for entry in M[i]]) + "]"
+        matrix_string += "vec![" + ",".join(["field_new!(Fr, \"{}\")".format(int(entry)) for entry in M[i]]) + "]"
         if i < (t-1):
             matrix_string += ","
     matrix_string += "]"
