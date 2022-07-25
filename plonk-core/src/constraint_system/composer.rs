@@ -679,8 +679,8 @@ where
             let qarith = self.q_arith[i];
             let qrange = self.q_range[i];
             let qlogic = self.q_logic[i];
-            let qfixed = self.q_fixed_group_add[i];
-            let qvar = self.q_variable_group_add[i];
+            let _qfixed = self.q_fixed_group_add[i];
+            let _qvar = self.q_variable_group_add[i];
             let pi = pi_vec[i];
 
             let a = w_l[i];
