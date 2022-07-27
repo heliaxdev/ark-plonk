@@ -1114,4 +1114,25 @@ mod test {
             KZG10<ark_bls12_377::Bls12_377>,
         >();
     }
+
+    #[test]
+    fn test_blinded_circuit_bls12_381_new() {
+        test_blinded_circuit_proof_verify::<
+            ark_ed_on_bls12_381_new::Fq,
+            ark_ed_on_bls12_381_new::Parameters,
+            KZG10<ark_bls12_381_new::Bls12_381New>,
+        >();
+    }
+    
+    #[test]
+    fn test_blinded_circuit_bw6_764_new() {
+        test_blinded_circuit_proof_verify::<
+            ark_bls12_381_new::Fq,
+            ark_bls12_381_new::g1::Parameters,
+            KZG10<ark_bw6_764_new::BW6_764New>,
+        >();
+    }
+    
+
+    
 }
