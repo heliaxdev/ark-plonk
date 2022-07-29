@@ -359,14 +359,14 @@ mod tests {
     use ark_ec::PairingEngine;
     use ark_ff::field_new;
 
-    type E = ark_bls12_377::Bls12_377;
-    type P = ark_ed_on_bls12_377::EdwardsParameters;
+    type E = ark_bls12_381_new::Bls12_381New;
+    type P = ark_ed_on_bls12_381_new::Parameters;
     type Fr = <E as PairingEngine>::Fr;
     use ark_std::{test_rng, UniformRand};
 
     #[test]
     fn test_poseidon_ref() {
-        // check consistency with: poseidonperm_bls12_377_width3.sage
+        // check consistency with: poseidonperm_bls12_381_new_width3.sage
         const ARITY: usize = 2;
         const WIDTH: usize = ARITY + 1;
 
@@ -385,18 +385,9 @@ mod tests {
         });
 
         let digest_expected = [
-            field_new!(
-                Fr,
-                "8045246065849844866513736973055835249171166826468256769867233520973116309619"
-            ),
-            field_new!(
-                Fr,
-                "141105065070080139709452061941028914208874346892227682489499578864878578541"
-            ),
-            field_new!(
-                Fr,
-                "7697401963219362476324189833184791605886953077561919566400708847582900971827"
-            ),
+            field_new!(Fr,"3728205326261278014613785130273402803815707683400853278582017660728430364360"),
+            field_new!(Fr,"3176691247781171270266150632479676826325479867399590521741069927459689265112"),
+            field_new!(Fr,"20554943040888975504675231128339958000589195579652149486334355941217045704312")            
         ];
         poseidon.output_hash(&mut ());
         let digest_actual = poseidon.elements;

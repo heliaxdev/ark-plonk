@@ -362,6 +362,8 @@ mod test {
     use crate::{constraint_system::StandardComposer, util};
     use ark_bls12_377::Bls12_377;
     use ark_bls12_381::Bls12_381;
+    use ark_bls12_381_new::Bls12_381New;
+    use ark_bw6_764_new::BW6_764New;
     use ark_ec::{
         twisted_edwards_extended::GroupAffine, AffineCurve, PairingEngine,
         ProjectiveCurve,
@@ -537,6 +539,27 @@ mod test {
             crate::commitment::KZG10<Bls12_377>,
         >()
     }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_full_on_Bls12_381_new() -> Result<(), Error> {
+        test_full::<
+            <Bls12_381New as PairingEngine>::Fr,
+            ark_ed_on_bls12_381_new::Parameters,
+            crate::commitment::KZG10<Bls12_381New>,
+        >()
+    }
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test_full_on_Bw6_764_new() -> Result<(), Error> {
+        test_full::<
+            <BW6_764New as PairingEngine>::Fr,
+            ark_bls12_381_new::g1::Parameters,
+            crate::commitment::KZG10<BW6_764New>,
+        >()
+    }
+
     #[test]
     #[allow(non_snake_case)]
     fn test_full_on_Bls12_377_ipa() -> Result<(), Error> {

@@ -48,7 +48,8 @@ where
     out_sigma: DensePolynomial<F>,
     fourth_sigma: DensePolynomial<F>,
 }
-/// Struct that contains all of the blinding values for a preprocessed [`ProverKey`]
+/// Struct that contains all of the blinding values for a preprocessed
+/// [`ProverKey`]
 ///
 /// [`ProverKey`]: ProverKey
 #[derive(Default, Copy, Clone, Debug)]
