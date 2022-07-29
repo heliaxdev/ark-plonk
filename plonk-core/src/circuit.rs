@@ -507,6 +507,75 @@ mod test {
         Ok(())
     }
 
+    fn test_full_addition_gate<F, P, PC>() -> Result<(), Error>
+    where
+        F: PrimeField,
+        P: TEModelParameters<BaseField = F>,
+        PC: HomomorphicCommitment<F>,
+        VerifierData<F, PC>: PartialEq,
+    {
+        // Generate CRS
+        let pp = PC::setup(1 << 10, None, &mut OsRng)
+            .map_err(to_pc_error::<F, PC>)?;
+
+        let mut circuit = TestCircuit::<F, P>::default();
+
+        // Compile the circuit
+        let (pk, vk) = circuit.compile::<PC>(&pp)?;
+
+        let (x, y) = P::AFFINE_GENERATOR_COEFFS;
+        let generator: GroupAffine<P> = GroupAffine::new(x, y);
+        let point_f_pi: GroupAffine<P> = generator+generator;
+
+        // Prover POV
+        let (proof, pi) = {
+            let mut circuit: TestCircuit<F, P> = TestCircuit {
+                a: F::from(20u64),
+                b: F::from(5u64),
+                c: F::from(25u64),
+                d: F::from(100u64),
+                e: P::ScalarField::from(2u64),
+                f: point_f_pi,
+            };
+
+            cfg_if::cfg_if! {
+                if #[cfg(feature = "trace")] {
+                    // Test trace
+                    let mut prover: Prover<F, P, PC> = Prover::new(b"Test");
+                    circuit.gadget(prover.mut_cs())?;
+                    prover.cs.check_circuit_satisfied();
+                }
+            }
+
+            circuit.gen_proof::<PC>(&pp, pk, b"Test")?
+        };
+
+        let verifier_data = VerifierData::new(vk, pi);
+
+        // Test serialisation for verifier_data
+        let mut verifier_data_bytes = Vec::new();
+        verifier_data.serialize(&mut verifier_data_bytes).unwrap();
+
+        let deserialized_verifier_data: VerifierData<F, PC> =
+            VerifierData::deserialize(verifier_data_bytes.as_slice()).unwrap();
+
+        assert!(deserialized_verifier_data == verifier_data);
+
+        // Verifier POV
+
+        // TODO: non-ideal hack for a first functional version.
+        assert!(verify_proof::<F, P, PC>(
+            &pp,
+            verifier_data.key,
+            &proof,
+            &verifier_data.pi,
+            b"Test",
+        )
+        .is_ok());
+
+        Ok(())
+    }
+
     #[test]
     #[allow(non_snake_case)]
     fn test_full_on_Bls12_381() -> Result<(), Error> {

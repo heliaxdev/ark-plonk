@@ -44,7 +44,7 @@ where
 
         let p1 = TEGroupAffine::<P>::new(*x_1_scalar, *y_1_scalar);
         let p2 = TEGroupAffine::<P>::new(*x_2_scalar, *y_2_scalar);
-
+        
         let point = p1 + p2;
         let x_3_scalar = point.x;
         let y_3_scalar = point.y;
@@ -229,7 +229,6 @@ mod test {
                     classical_point_addition(composer, point_a, point_b);
 
                 composer.assert_equal_point(point, point2);
-
                 composer.assert_equal_public_point(point, expected_point);
             },
             2000,
@@ -253,4 +252,14 @@ mod test {
             ark_ed_on_bls12_377::EdwardsParameters
         )
     );
+
+    use ark_bls12_381_new::Bls12_381New;
+    batch_test!(
+        [test_curve_addition],
+        [] => (
+            Bls12_381New,
+            ark_ed_on_bls12_381_new::Parameters
+        )
+    );
+    
 }
