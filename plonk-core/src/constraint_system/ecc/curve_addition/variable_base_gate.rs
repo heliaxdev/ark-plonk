@@ -44,7 +44,7 @@ where
 
         let p1 = TEGroupAffine::<P>::new(*x_1_scalar, *y_1_scalar);
         let p2 = TEGroupAffine::<P>::new(*x_2_scalar, *y_2_scalar);
-        
+
         let point = p1 + p2;
         let x_3_scalar = point.x;
         let y_3_scalar = point.y;
@@ -261,5 +261,4 @@ mod test {
             ark_ed_on_bls12_381_new::Parameters
         )
     );
-    
 }
