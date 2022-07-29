@@ -795,7 +795,7 @@ where
 
     /// Get the field element value from variable
     pub fn get_value(&self, value: &Variable) -> F {
-        self.variables.get(value).unwrap().clone()
+        *self.variables.get(value).unwrap()
     }
 
     /// Add a variable to a circuit and constrain it to a public input.
@@ -1123,7 +1123,7 @@ mod test {
             KZG10<ark_bls12_381_new::Bls12_381New>,
         >();
     }
-    
+
     #[test]
     fn test_blinded_circuit_bw6_764_new() {
         test_blinded_circuit_proof_verify::<
@@ -1132,7 +1132,4 @@ mod test {
             KZG10<ark_bw6_764_new::BW6_764New>,
         >();
     }
-    
-
-    
 }
