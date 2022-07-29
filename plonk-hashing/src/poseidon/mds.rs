@@ -179,18 +179,20 @@ pub fn factor_to_sparse_matrixes<F: PrimeField>(
 #[cfg(test)]
 mod tests {
     use crate::poseidon::{matrix::Matrix, mds::MdsMatrices};
-    use ark_bls12_377::Fr;
+    use ark_bls12_377::Fr as Fr_bls12_377;
+    use ark_bls12_381_new::Fr as Fr_bls12_381_new;
     use ark_ff::field_new;
     use ark_std::{test_rng, UniformRand};
 
     #[test]
     fn test_mds_matrices_creation() {
         for i in 2..5 {
-            test_mds_matrices_creation_aux(i);
+            test_mds_matrices_creation_aux_bls12_381_new(i);
+            test_mds_matrices_creation_aux_bls12_377(i);
         }
     }
 
-    fn test_mds_matrices_creation_aux(width: usize) {
+    fn test_mds_matrices_creation_aux_bls12_381_new(width: usize) {
         let MdsMatrices {
             m,
             m_inv,
@@ -198,7 +200,34 @@ mod tests {
             m_hat_inv: _,
             m_prime,
             m_double_prime,
-        } = MdsMatrices::<Fr>::new(width);
+        } = MdsMatrices::<Fr_bls12_381_new>::new(width);
+
+        for i in 0..m_hat.num_rows() {
+            for j in 0..m_hat.num_columns() {
+                assert_eq!(
+                    m[i + 1][j + 1],
+                    m_hat[i][j],
+                    "MDS minor has wrong value."
+                );
+            }
+        }
+
+        // M^-1 x M = I
+        assert!(m_inv.matmul(&m).unwrap().is_identity());
+
+        // M' x M'' = M
+        assert_eq!(m, m_prime.matmul(&m_double_prime).unwrap());
+    }
+
+    fn test_mds_matrices_creation_aux_bls12_377(width: usize) {
+        let MdsMatrices {
+            m,
+            m_inv,
+            m_hat,
+            m_hat_inv: _,
+            m_prime,
+            m_double_prime,
+        } = MdsMatrices::<Fr_bls12_377>::new(width);
 
         for i in 0..m_hat.num_rows() {
             for j in 0..m_hat.num_columns() {
@@ -219,22 +248,60 @@ mod tests {
 
     #[test]
     fn test_swapping() {
-        test_swapping_aux(3)
+        test_swapping_aux_bls12_377(3);
+        test_swapping_aux_bls12_381_new(3);
     }
 
-    fn test_swapping_aux(width: usize) {
+    fn test_swapping_aux_bls12_381_new(width: usize) {
         let mut rng = test_rng();
-        let mds = MdsMatrices::<Fr>::new(width);
+        let mds = MdsMatrices::<Fr_bls12_381_new>::new(width);
 
-        let base = (0..width).map(|_| Fr::rand(&mut rng)).collect::<Vec<_>>();
+        let base = (0..width)
+            .map(|_| Fr_bls12_381_new::rand(&mut rng))
+            .collect::<Vec<_>>();
         let x = {
             let mut x = base.clone();
-            x[0] = Fr::rand(&mut rng);
+            x[0] = Fr_bls12_381_new::rand(&mut rng);
             x
         };
         let y = {
             let mut y = base.clone();
-            y[0] = Fr::rand(&mut rng);
+            y[0] = Fr_bls12_381_new::rand(&mut rng);
+            y
+        };
+
+        let qx = mds.m_prime.right_apply(&x);
+        let qy = mds.m_prime.right_apply(&y);
+        assert_eq!(qx[0], x[0]);
+        assert_eq!(qy[0], y[0]);
+        assert_eq!(qx[1..], qy[1..]);
+
+        let mx = mds.m.left_apply(&x);
+        let m1_m2_x =
+            mds.m_prime.left_apply(&mds.m_double_prime.left_apply(&x));
+        assert_eq!(mx, m1_m2_x);
+
+        let xm = mds.m.right_apply(&x);
+        let x_m1_m2 =
+            mds.m_double_prime.right_apply(&mds.m_prime.right_apply(&x));
+        assert_eq!(xm, x_m1_m2);
+    }
+
+    fn test_swapping_aux_bls12_377(width: usize) {
+        let mut rng = test_rng();
+        let mds = MdsMatrices::<Fr_bls12_377>::new(width);
+
+        let base = (0..width)
+            .map(|_| Fr_bls12_377::rand(&mut rng))
+            .collect::<Vec<_>>();
+        let x = {
+            let mut x = base.clone();
+            x[0] = Fr_bls12_377::rand(&mut rng);
+            x
+        };
+        let y = {
+            let mut y = base.clone();
+            y[0] = Fr_bls12_377::rand(&mut rng);
             y
         };
 
@@ -256,56 +323,60 @@ mod tests {
     }
 
     #[test]
-    fn test_mds_creation_hardcoded() {
+    fn test_mds_creation_hardcoded_bls12_377() {
         // value come out from sage script
+        // sage generate_parameters_grain_deterministic.sage 1 0 253 3 8 55
+        // 0x12ab655e9a2ca55660b44d1e5c37b00159aa76fed00000010a11800000000001
         let width = 3;
 
         let expected_mds = Matrix(vec![
             vec![
-                field_new!(
-                    Fr,
-                    "5629641166285580282832549959187697687583932890102709218623488970611606159361"
-                ),
-                field_new!(
-                    Fr,
-                    "6333346312071277818186618704086159898531924501365547870951425091938056929281"
-                ),
-                field_new!(
-                    Fr,
-                    "6755569399542696339399059951025237225100719468123251062348186764733927391233"
-                ),
+                field_new!(Fr_bls12_377, "5629641166285580282832549959187697687583932890102709218623488970611606159361"),
+                field_new!(Fr_bls12_377, "6333346312071277818186618704086159898531924501365547870951425091938056929281"),
+                field_new!(Fr_bls12_377, "6755569399542696339399059951025237225100719468123251062348186764733927391233"),
             ],
             vec![
-                field_new!(
-                    Fr,
-                    "6333346312071277818186618704086159898531924501365547870951425091938056929281"
-                ),
-                field_new!(
-                    Fr,
-                    "6755569399542696339399059951025237225100719468123251062348186764733927391233"
-                ),
-                field_new!(
-                    Fr,
-                    "7037051457856975353540687448984622109479916112628386523279361213264507699201"
-                ),
+                field_new!(Fr_bls12_377, "6333346312071277818186618704086159898531924501365547870951425091938056929281"),
+                field_new!(Fr_bls12_377, "6755569399542696339399059951025237225100719468123251062348186764733927391233"),
+                field_new!(Fr_bls12_377, "7037051457856975353540687448984622109479916112628386523279361213264507699201"),
             ],
             vec![
-                field_new!(
-                    Fr,
-                    "6755569399542696339399059951025237225100719468123251062348186764733927391233"
-                ),
-                field_new!(
-                    Fr,
-                    "7037051457856975353540687448984622109479916112628386523279361213264507699201"
-                ),
-                field_new!(
-                    Fr,
-                    "7238110070938603220784707090384182741179342287274911852515914390786350776321"
-                ),
+                field_new!(Fr_bls12_377, "6755569399542696339399059951025237225100719468123251062348186764733927391233"),
+                field_new!(Fr_bls12_377, "7037051457856975353540687448984622109479916112628386523279361213264507699201"),
+                field_new!(Fr_bls12_377, "7238110070938603220784707090384182741179342287274911852515914390786350776321"),
             ],
         ]);
 
-        let mds = MdsMatrices::<Fr>::generate_mds(width);
+        let mds = MdsMatrices::<Fr_bls12_377>::generate_mds(width);
+        assert_eq!(mds, expected_mds);
+    }
+
+    #[test]
+    fn test_mds_creation_hardcoded_bls12_381_new() {
+        // value come out from sage script
+        // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55
+        // 0x58bb7f6cf05bd874fbed5cb8c4bd3dd98595441902ad000188da7a0000000001
+        let width = 3;
+
+        let expected_mds = Matrix(vec![
+            vec![
+                field_new!(Fr_bls12_381_new, "26756540356809343708284056755175934846071311223035140860066876084317111451649"),
+                field_new!(Fr_bls12_381_new, "30101107901410511671819563849572926701830225125914533467575235594856750383105"),
+                field_new!(Fr_bls12_381_new, "24080886321128409337455651079658341361464180100731626774060188475885400306484"),
+            ],
+            vec![
+                field_new!(Fr_bls12_381_new, "30101107901410511671819563849572926701830225125914533467575235594856750383105"),
+                field_new!(Fr_bls12_381_new, "24080886321128409337455651079658341361464180100731626774060188475885400306484"),
+                field_new!(Fr_bls12_381_new, "33445675446011679635355070943969918557589139028793926075083595105396389314561"),
+            ],
+            vec![
+                field_new!(Fr_bls12_381_new, "24080886321128409337455651079658341361464180100731626774060188475885400306484"),
+                field_new!(Fr_bls12_381_new, "33445675446011679635355070943969918557589139028793926075083595105396389314561"),
+                field_new!(Fr_bls12_381_new, "34401266173040584767793787256654773373520257286759466820085983536979143294977"),
+            ],
+        ]);
+
+        let mds = MdsMatrices::<Fr_bls12_381_new>::generate_mds(width);
         assert_eq!(mds, expected_mds);
     }
 }

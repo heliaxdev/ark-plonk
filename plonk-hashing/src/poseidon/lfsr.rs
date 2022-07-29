@@ -164,28 +164,57 @@ impl GrainLFSR {
 #[cfg(test)]
 mod tests {
     use crate::poseidon::lfsr::GrainLFSR;
-    use ark_bls12_377::Fr;
+    use ark_bls12_377::Fr as Fr_bls12_377;
+    use ark_bls12_381_new::Fr as Fr_bls12_381_new;
     use ark_ff::field_new;
 
     #[test]
-    fn test_grain_lfsr_consistency() {
-        // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55
-        // 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
+    fn test_grain_lfsr_consistency_bls12_377() {
+        // two first values of the round constants output from
+        // ```
+        // sage generate_parameters_grain_deterministic.sage 1 0 253 3 8 55
+        // 0x12ab655e9a2ca55660b44d1e5c37b00159aa76fed00000010a11800000000001
+        // ```
 
         let mut lfsr = GrainLFSR::new(253, 3, 8, 55);
         assert_eq!(
-            lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
-            field_new!(
-                Fr,
-                "197062428584453850050552081643643105851184297764110852263363150496355324172"
-            )
-        );
+                lfsr.get_field_elements_rejection_sampling::<Fr_bls12_377>(1)[0],
+                field_new!(
+                    Fr_bls12_377,
+                    "197062428584453850050552081643643105851184297764110852263363150496355324172"
+                )
+            );
         assert_eq!(
-            lfsr.get_field_elements_rejection_sampling::<Fr>(1)[0],
-            field_new!(
-                Fr,
-                "1513787136572833847346781771185498599265647617178372934394332422269557737548"
-            )
-        );
+                lfsr.get_field_elements_rejection_sampling::<Fr_bls12_377>(1)[0],
+                field_new!(
+                    Fr_bls12_377,
+                    "1513787136572833847346781771185498599265647617178372934394332422269557737548"
+                )
+            );
+    }
+
+    #[test]
+    fn test_grain_lfsr_consistency_bls12_381_new() {
+        // two first values of the round constants output from
+        // ```
+        // sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55
+        // 0x58bb7f6cf05bd874fbed5cb8c4bd3dd98595441902ad000188da7a0000000001
+        // ```
+
+        let mut lfsr = GrainLFSR::new(255, 3, 8, 55);
+        assert_eq!(
+                lfsr.get_field_elements_rejection_sampling::<Fr_bls12_381_new>(1)[0],
+                field_new!(
+                    Fr_bls12_381_new,
+                    "12678502092746318913289523392430826887011664085277767208266352862540971998250"
+                )
+            );
+        assert_eq!(
+                lfsr.get_field_elements_rejection_sampling::<Fr_bls12_381_new>(1)[0],
+                field_new!(
+                    Fr_bls12_381_new,
+                    "2984601628531025684563499708543701178678526318016879330847435430504374437980"
+                )
+            );
     }
 }

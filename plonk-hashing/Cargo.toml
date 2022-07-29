@@ -22,12 +22,15 @@ std = []
 
 [dependencies]
 plonk-core = { path = "../plonk-core", features = ["trace"]}
-ark-ff = { version = "0.3", default-features = false }
-ark-ec = { version = "0.3", default-features = false }
+ark-serialize = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
+ark-ff = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
+ark-ec = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
 thiserror = "1.0.30"
 derivative = { version = "2.2.0", default-features = false, features = ["use_core"] }
 
 [dev-dependencies]
-ark-bls12-377 = { git="https://github.com/simonmasson/curves/", branch="new-curve-models" }
-ark-ed-on-bls12-377 = { git="https://github.com/simonmasson/curves/", branch="new-curve-models" }
+ark-bls12-377 = { git="https://github.com/simonmasson/curves/", branch="new-pairing-layer" }
+ark-ed-on-bls12-377 = { git="https://github.com/simonmasson/curves/", branch="new-pairing-layer" }
+ark-bls12-381-new = { git="https://github.com/simonmasson/curves/", branch="new-pairing-layer" }
+ark-ed-on-bls12-381-new = { git="https://github.com/simonmasson/curves/", branch="new-pairing-layer" }
 ark-std = "0.3"

@@ -44,3 +44,19 @@ sage generate_parameters_grain_deterministic.sage 1 0 253 3 8 55 0x12ab655e9a2ca
 ```shell
 sage poseidonperm_bls12_377_width3.sage
 ```
+
+# BLS12-381-New
+## Round number calculation for BLS12-381-New scalar field
+```shell
+python3 calc_round_numbers.py 765 3 128 1 1
+```
+
+## Parameters generation for BLS12-381-New scalar field
+```shell
+sage generate_parameters_grain_deterministic.sage 1 0 255 3 8 55 0x58bb7f6cf05bd874fbed5cb8c4bd3dd98595441902ad000188da7a0000000001
+```
+
+## Hash computation
+```shell
+sage poseidonperm_bls12_381_new_width3.sage
+```

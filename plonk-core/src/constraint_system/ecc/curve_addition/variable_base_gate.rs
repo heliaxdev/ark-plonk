@@ -229,7 +229,6 @@ mod test {
                     classical_point_addition(composer, point_a, point_b);
 
                 composer.assert_equal_point(point, point2);
-
                 composer.assert_equal_public_point(point, expected_point);
             },
             2000,
@@ -251,6 +250,15 @@ mod test {
         [] => (
             Bls12_377,
             ark_ed_on_bls12_377::EdwardsParameters
+        )
+    );
+
+    use ark_bls12_381_new::Bls12_381New;
+    batch_test!(
+        [test_curve_addition],
+        [] => (
+            Bls12_381New,
+            ark_ed_on_bls12_381_new::Parameters
         )
     );
 }

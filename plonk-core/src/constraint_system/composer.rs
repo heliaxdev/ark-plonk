@@ -678,8 +678,8 @@ where
             let qarith = self.q_arith[i];
             let qrange = self.q_range[i];
             let qlogic = self.q_logic[i];
-            let qfixed = self.q_fixed_group_add[i];
-            let qvar = self.q_variable_group_add[i];
+            let _qfixed = self.q_fixed_group_add[i];
+            let _qvar = self.q_variable_group_add[i];
             let pi = pi_vec[i];
 
             let a = w_l[i];
@@ -721,8 +721,8 @@ where
                 qarith,
                 qrange,
                 qlogic,
-                qfixed,
-                qvar,
+                _qfixed,
+                _qvar,
                 a,
                 b,
                 c,
@@ -807,7 +807,7 @@ where
 
     /// Get the field element value from variable
     pub fn get_value(&self, value: &Variable) -> F {
-        self.variables.get(value).unwrap().clone()
+        *self.variables.get(value).unwrap()
     }
 
     /// Add a variable to a circuit and constrain it to a public input.
@@ -1124,6 +1124,24 @@ mod test {
             ark_ed_on_bls12_377::Fq,
             ark_ed_on_bls12_377::EdwardsParameters,
             KZG10<ark_bls12_377::Bls12_377>,
+        >();
+    }
+
+    #[test]
+    fn test_blinded_circuit_bls12_381_new() {
+        test_blinded_circuit_proof_verify::<
+            ark_ed_on_bls12_381_new::Fq,
+            ark_ed_on_bls12_381_new::Parameters,
+            KZG10<ark_bls12_381_new::Bls12_381New>,
+        >();
+    }
+
+    #[test]
+    fn test_blinded_circuit_bw6_764_new() {
+        test_blinded_circuit_proof_verify::<
+            ark_bls12_381_new::Fq,
+            ark_bls12_381_new::g1::Parameters,
+            KZG10<ark_bw6_764_new::BW6_764New>,
         >();
     }
 }

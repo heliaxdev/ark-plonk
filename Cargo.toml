@@ -69,3 +69,9 @@ lto = "thin"
 opt-level = 3
 overflow-checks = false
 rpath = false
+
+[patch.crates-io]
+ark-serialize = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
+ark-ff = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
+ark-ec = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
+ark-std = { git = "https://github.com/arkworks-rs/std/", rev = "2b3568f" }
