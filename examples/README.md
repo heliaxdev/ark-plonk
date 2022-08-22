@@ -29,8 +29,8 @@ cargo run --example sudoku --release
 ```
 I obtained in my machine (`Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz`)
 ```
-setup: 			    56ms
+setup: 			56ms
 key generation: 	211ms
-proof: 			    215ms
+proof: 			215ms
 verification: 		7ms
 ```
