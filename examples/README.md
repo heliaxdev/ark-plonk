@@ -19,7 +19,7 @@ Finally, the Sudoku circuit is split as:
 
 ## Size and cost
 ### Circuit
-Our current circuit is composed of 1024 gates.
+Our current circuit is composed of 2048 gates.
 ### Proof size
 PLONK proofs are fully succint. If I remember correctly, it includes 16 (base) field elements, so approximately 6kb.
 ### Timings
@@ -29,8 +29,8 @@ cargo run --example sudoku --release
 ```
 I obtained in my machine (`Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz`)
 ```
-setup: 			56ms
-key generation: 	211ms
-proof: 			215ms
+setup: 			90ms
+key generation: 	385ms
+proof: 			382ms
 verification: 		7ms
 ```
