@@ -1,8 +1,10 @@
 //! Sudoku PLONK Example
 
-use ark_bls12_381::{Bls12_381, Fr};
+// use ark_bls12_381::{Bls12_381, Fr};
+use ark_bw6_761::{BW6_761, Fr};
 use ark_ec::TEModelParameters;
-use ark_ed_on_bls12_381::EdwardsParameters as JubjubParameters;
+// use ark_ed_on_bls12_381::EdwardsParameters as JubjubParameters;
+use ark_bls12_377::g1::Parameters as InnerParameters;
 use ark_ff::PrimeField;
 use ark_poly::polynomial::univariate::DensePolynomial;
 use ark_poly_commit::{sonic_pc::SonicKZG10, PolynomialCommitment};
@@ -185,10 +187,10 @@ fn main() -> Result<(), Error> {
         }
     }
 
-    let mut circuit = SudokuCircuit::<Fr, JubjubParameters>::default();
+    let mut circuit = SudokuCircuit::<Fr, InnerParameters>::default();
 
     // Generate CRS
-    type PC = SonicKZG10<Bls12_381, DensePolynomial<Fr>>;
+    type PC = SonicKZG10<BW6_761, DensePolynomial<Fr>>;
     let time = Instant::now();
     let pp =
         PC::setup(1 << 11, None, &mut OsRng).map_err(to_pc_error::<Fr, PC>)?;
@@ -205,7 +207,7 @@ fn main() -> Result<(), Error> {
     // Prover POV
     let time = Instant::now();
     let (proof, pi) = {
-        let mut circuit: SudokuCircuit<Fr, JubjubParameters> = SudokuCircuit {
+        let mut circuit: SudokuCircuit<Fr, InnerParameters> = SudokuCircuit {
             sudoku: [
                 [7, 6, 0, 5, 3, 8, 1, 2, 4],
                 [2, 4, 3, 7, 1, 0, 6, 5, 8],
@@ -218,7 +220,7 @@ fn main() -> Result<(), Error> {
                 [3, 2, 5, 1, 0, 7, 8, 4, 6],
             ],
             _marker1: PhantomData::<Fr>,
-            _marker2: PhantomData::<JubjubParameters>,
+            _marker2: PhantomData::<InnerParameters>,
         };
         circuit.gen_proof::<PC>(&pp, pk_p, b"Test")
     }?;
@@ -227,7 +229,7 @@ fn main() -> Result<(), Error> {
     // Verifier POV
     let time = Instant::now();
     let verifier_data = VerifierData::new(vk, pi);
-    let res = verify_proof::<Fr, JubjubParameters, PC>(
+    let res = verify_proof::<Fr, InnerParameters, PC>(
         &pp,
         verifier_data.key,
         &proof,
