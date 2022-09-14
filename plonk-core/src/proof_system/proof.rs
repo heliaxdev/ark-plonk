@@ -399,6 +399,7 @@ where
             self.evaluations.lookup_evals.table_next_eval,
         ];
 
+        println!("first check");
         match PC::check(
             verifier_key,
             &aw_commits,
@@ -413,6 +414,7 @@ where
             Err(e) => panic!("{:?}", e),
         }
         .and_then(|_| {
+            println!("second check");
             match PC::check(
                 verifier_key,
                 &saw_commits,
