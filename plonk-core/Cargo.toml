@@ -51,9 +51,9 @@ trace-print = ["trace", "std"]
 ark-bls12-381 = "0.3"
 ark-std = { version = "0.3", features = ["std"] }
 blake2 = "0.9"
-ark-serialize = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
-ark-ff = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
-ark-ec = { git="https://github.com/simonmasson/algebra", rev="e2ea75c" }
+ark-serialize = "0.3"
+ark-ff = "0.3"
+ark-ec = "0.3"
 ark-poly = { version = "0.3" }
 ark-poly-commit = { version = "0.3" }
 derivative = { version = "2.2.0", default-features = false, features = ["use_core"] }
