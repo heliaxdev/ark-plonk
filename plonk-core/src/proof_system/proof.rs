@@ -118,6 +118,7 @@ where
     where
         P: TEModelParameters<BaseField = F>,
     {
+        println!("WE ARE HERE");
         let domain =
             GeneralEvaluationDomain::<F>::new(plonk_verifier_key.n).ok_or(Error::InvalidEvalDomainSize {
                 log_size_of_group: plonk_verifier_key.n.trailing_zeros(),
