@@ -180,6 +180,9 @@ where
         assert!(gamma != epsilon, "challenges must be different");
         assert!(delta != epsilon, "challenges must be different");
 
+        println!("beta = {}", beta);
+        println!("gamma = {}", gamma);        
+
         // Add commitment to permutation polynomial to transcript
         transcript.append(b"z", &self.z_comm);
 

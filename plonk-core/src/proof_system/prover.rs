@@ -363,6 +363,10 @@ where
         assert!(gamma != epsilon, "challenges must be different");
         assert!(delta != epsilon, "challenges must be different");
 
+        println!("b = {}", beta);
+        println!("g = {}", gamma);
+        
+
         let z_poly = self.cs.perm.compute_permutation_poly(
             &domain,
             (w_l_scalar, w_r_scalar, w_o_scalar, w_4_scalar),
