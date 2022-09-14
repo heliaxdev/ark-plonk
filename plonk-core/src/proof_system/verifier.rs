@@ -128,6 +128,7 @@ where
         pc_verifier_key: &PC::VerifierKey,
         public_inputs: &PublicInputs<F>,
     ) -> Result<(), Error> {
+        println!("123");
         proof.verify::<P>(
             self.verifier_key.as_ref().unwrap(),
             &mut self.preprocessed_transcript.clone(),
