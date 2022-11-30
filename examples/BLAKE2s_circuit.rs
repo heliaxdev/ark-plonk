@@ -297,7 +297,7 @@ fn main() -> Result<(), Error> {
 
     let mut circuit = Blake2Circuit::<BlsScalar, JubJubParameters>::default();
     // Compile the circuit
-    let (pk_p, vk) = circuit.compile::<PC>(&pp)?;
+    let (pk_p, (vk, _pi_pos)) = circuit.compile::<PC>(&pp)?;
 
     let (x, y) = JubJubParameters::AFFINE_GENERATOR_COEFFS;
     let generator: GroupAffine<JubJubParameters> = GroupAffine::new(x, y);
