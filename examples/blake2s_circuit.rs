@@ -9,10 +9,9 @@
 //! PLONK Example
 
 use ark_bls12_381::{Bls12_381, Fr as BlsScalar};
-use ark_ec::models::twisted_edwards_extended::GroupAffine;
-use ark_ec::{AffineCurve, ProjectiveCurve, TEModelParameters};
+use ark_ec::TEModelParameters;
 use ark_ed_on_bls12_381::{
-    EdwardsParameters as JubJubParameters, Fr as JubJubScalar,
+    EdwardsParameters as JubJubParameters,
 };
 use ark_ff::PrimeField;
 use ark_poly::polynomial::univariate::DensePolynomial;
