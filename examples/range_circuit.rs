@@ -59,7 +59,7 @@ fn main() -> Result<(), Error> {
             let range_in2 = |composer : &mut StandardComposer<F,P>, a_var : Variable, range : usize| {
                 let mut _temp_var = a_var;
 
-                for i in 1..range  {
+                for i in 0..range  {
                     if i < range - 1 {
                         let a = <F as PrimeField>::BigInt::as_ref(&composer.value_of_var(_temp_var).into_repr())[0];
 
