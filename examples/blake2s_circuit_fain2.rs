@@ -35,18 +35,18 @@ fn main() -> Result<(), Error> {
     #[derive(derivative::Derivative)]
     #[derivative(Debug(bound = ""), Default(bound = ""))]
     pub struct Blake2Circuit<F, P>
-    where
-        F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        where
+            F: PrimeField,
+            P: TEModelParameters<BaseField = F>,
     {
         s: Box<str>,
         f: PhantomData<P>,
     }
 
     impl<F, P> Circuit<F, P> for Blake2Circuit<F, P>
-    where
-        F: PrimeField,
-        P: TEModelParameters<BaseField = F>,
+        where
+            F: PrimeField,
+            P: TEModelParameters<BaseField = F>,
     {
         const CIRCUIT_ID: [u8; 32] = [0xff; 32];
 
@@ -222,15 +222,15 @@ fn main() -> Result<(), Error> {
 
             // SIGMA ROTATIONS
             let sigma:Vec<Vec<usize>> = vec![vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                                           vec![14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
-                                           vec![11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4],
-                                           vec![7, 9, 3, 1, 13, 12, 11, 14, 2, 6, 5, 10, 4, 0, 15, 8],
-                                           vec![9, 0, 5, 7, 2, 4, 10, 15, 14, 1, 11, 12, 6, 8, 3, 13],
-                                           vec![2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9],
-                                           vec![12, 5, 1, 15, 14, 13, 4, 10, 0, 7, 6, 3, 9, 2, 8, 11],
-                                           vec![13, 11, 7, 14, 12, 1, 3, 9, 5, 0, 15, 4, 8, 6, 2, 10],
-                                           vec![6, 15, 14, 9, 11, 3, 0, 8, 12, 2, 13, 7, 1, 4, 10, 5],
-                                           vec![10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0]];
+                                             vec![14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
+                                             vec![11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4],
+                                             vec![7, 9, 3, 1, 13, 12, 11, 14, 2, 6, 5, 10, 4, 0, 15, 8],
+                                             vec![9, 0, 5, 7, 2, 4, 10, 15, 14, 1, 11, 12, 6, 8, 3, 13],
+                                             vec![2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9],
+                                             vec![12, 5, 1, 15, 14, 13, 4, 10, 0, 7, 6, 3, 9, 2, 8, 11],
+                                             vec![13, 11, 7, 14, 12, 1, 3, 9, 5, 0, 15, 4, 8, 6, 2, 10],
+                                             vec![6, 15, 14, 9, 11, 3, 0, 8, 12, 2, 13, 7, 1, 4, 10, 5],
+                                             vec![10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0]];
 
             // Initialization vector
             let iv : Vec<u64> = vec![1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225];
@@ -259,22 +259,22 @@ fn main() -> Result<(), Error> {
 
             // mudlo 2^32 operation
             let mod_32 = |composer : &mut StandardComposer<F,P>, a_var : Variable| {
-               //composer.range_gate(a_var, 32);
-               let a = <F as PrimeField>::BigInt::as_ref(&composer.value_of_var(a_var).into_repr())[0];
-               let a_reminder = a % u64::pow(2, 32 as u32);
-               let a_quotient = a / u64::pow(2, 32 as u32);
+                //composer.range_gate(a_var, 32);
+                let a = <F as PrimeField>::BigInt::as_ref(&composer.value_of_var(a_var).into_repr())[0];
+                let a_reminder = a % u64::pow(2, 32 as u32);
+                let a_quotient = a / u64::pow(2, 32 as u32);
 
-               let quotient_var = composer.add_input(F::from(a_quotient));
-               let reminder_var = composer.add_input(F::from(a_reminder));
+                let quotient_var = composer.add_input(F::from(a_quotient));
+                let reminder_var = composer.add_input(F::from(a_reminder));
 
-               //Checking that the operations made by the prover are sound
-               composer.arithmetic_gate(|gate| {
-                   gate.witness(reminder_var, quotient_var, Some(a_var))
-                       .add( F::one(), F::from(u64::pow(2, 32 as u32)))
-               });
-               range_in2(composer, quotient_var, 32);
-               return reminder_var;
-           };
+                //Checking that the operations made by the prover are sound
+                composer.arithmetic_gate(|gate| {
+                    gate.witness(reminder_var, quotient_var, Some(a_var))
+                        .add( F::one(), F::from(u64::pow(2, 32 as u32)))
+                });
+                range_in2(composer, quotient_var, 32);
+                return reminder_var;
+            };
 
             let ll_var = composer.add_input(F::from(ll as u64));
             v[12] = xor(composer,v[12], ll_var, 32);
@@ -285,54 +285,54 @@ fn main() -> Result<(), Error> {
 
             // computes the n-bits cyclic right rotation y of a variable
             let rotation =  |
-               composer : &mut StandardComposer<F,P>,
-               x_var: Variable,
-               n :usize ,
-               k :usize
-           | {
-               range_in2(composer, x_var, 32);
-               let x = <F as PrimeField>::BigInt::as_ref(&composer.value_of_var(x_var).into_repr())[0];
-               // Check that x is in range 32
-               // composer.range_gate(x_var, k);
+                composer : &mut StandardComposer<F,P>,
+                x_var: Variable,
+                n :usize ,
+                k :usize
+            | {
+                range_in2(composer, x_var, 32);
+                let x = <F as PrimeField>::BigInt::as_ref(&composer.value_of_var(x_var).into_repr())[0];
+                // Check that x is in range 32
+                // composer.range_gate(x_var, k);
 
-               // compute the quotient and reminder, render them as variables
-               let h = x % (u64::pow(2, n as u32));
-               let h_var = composer.add_input(F::from(h));
-               let l = x / u64::pow(2, n as u32);
-               let l_var = composer.add_input(F::from(l));
+                // compute the quotient and reminder, render them as variables
+                let h = x % (u64::pow(2, n as u32));
+                let h_var = composer.add_input(F::from(h));
+                let l = x / u64::pow(2, n as u32);
+                let l_var = composer.add_input(F::from(l));
 
-               // check the reminder is in range n bits
-               range_in2(composer, h_var, n);
+                // check the reminder is in range n bits
+                range_in2(composer, h_var, n);
 
-               // check that x = 2^n * l + h
-               composer.arithmetic_gate(|gate| {
-                   gate.witness(l_var, h_var, Some(x_var))
-                       .add(F::from(u64::pow(2, n as u32)), F::one())
-               });
+                // check that x = 2^n * l + h
+                composer.arithmetic_gate(|gate| {
+                    gate.witness(l_var, h_var, Some(x_var))
+                        .add(F::from(u64::pow(2, n as u32)), F::one())
+                });
 
-               // output y = 2**(k-n) * h + l, the rotation of x
-               let y_var = composer.arithmetic_gate(|gate| {
-                   gate.witness(h_var, l_var, None)
-                       .add(F::from(u64::pow(2, (k - n) as u32)), F::one())
-               });
+                // output y = 2**(k-n) * h + l, the rotation of x
+                let y_var = composer.arithmetic_gate(|gate| {
+                    gate.witness(h_var, l_var, None)
+                        .add(F::from(u64::pow(2, (k - n) as u32)), F::one())
+                });
 
-               return y_var;
-           };
+                return y_var;
+            };
 
             // G mixing function, build using rotation closure above
             let g_mix = |
-               composer: &mut StandardComposer<F, P>,
-               va: Variable,
-               vb: Variable,
-               vc: Variable,
-               vd: Variable,
-               x_var : Variable,
-               y_var : Variable            // Build a test for the rotation function
+                composer: &mut StandardComposer<F, P>,
+                va: Variable,
+                vb: Variable,
+                vc: Variable,
+                vd: Variable,
+                x_var : Variable,
+                y_var : Variable            // Build a test for the rotation function
 
-           | {
-               // Check that the input variables are in range_
-               range_in2(composer, x_var, 32);
-               range_in2(composer, y_var, 32);
+            | {
+                // Check that the input variables are in range_
+                range_in2(composer, x_var, 32);
+                range_in2(composer, y_var, 32);
 
                 let temp1 = composer.arithmetic_gate(|gate| {
                     gate.witness(va, vb, None)
@@ -344,90 +344,90 @@ fn main() -> Result<(), Error> {
                         .add(F::one(), F::one())
                 });
 
-               let va1 = mod_32(composer, _va1);
+                let va1 = mod_32(composer, _va1);
 
-               let temp2 = xor(composer,vd, va1, 32);
-               let vd1 = rotation(composer, temp2, 16, 32);
+                let temp2 = xor(composer,vd, va1, 32);
+                let vd1 = rotation(composer, temp2, 16, 32);
 
-               let _vc1 = composer.arithmetic_gate(|gate| {
-                   gate.witness(vc, vd1, None)
-                       .add(F::one(), F::one())
-               });
-               let vc1 = mod_32(composer, _vc1);
+                let _vc1 = composer.arithmetic_gate(|gate| {
+                    gate.witness(vc, vd1, None)
+                        .add(F::one(), F::one())
+                });
+                let vc1 = mod_32(composer, _vc1);
 
-               let temp3 = xor(composer,vb, vc1, 32);
-               let vb1 = rotation(composer, temp3, 12, 32);
+                let temp3 = xor(composer,vb, vc1, 32);
+                let vb1 = rotation(composer, temp3, 12, 32);
 
-               let temp4 = composer.arithmetic_gate(|gate| {
-                   gate.witness(va1, vb1, None)
-                       .add(F::one(), F::one())
-               });
-               let _va2 = composer.arithmetic_gate(|gate| {
-                   gate.witness(temp4, y_var, None)
-                       .add(F::one(), F::one())
-               });
-               let va2 = mod_32(composer, _va2);
+                let temp4 = composer.arithmetic_gate(|gate| {
+                    gate.witness(va1, vb1, None)
+                        .add(F::one(), F::one())
+                });
+                let _va2 = composer.arithmetic_gate(|gate| {
+                    gate.witness(temp4, y_var, None)
+                        .add(F::one(), F::one())
+                });
+                let va2 = mod_32(composer, _va2);
 
-               let temp5 = xor(composer,vd1, va2, 32);
-               let vd2 = rotation(composer, temp5, 8, 32);
+                let temp5 = xor(composer,vd1, va2, 32);
+                let vd2 = rotation(composer, temp5, 8, 32);
 
-               let _vc2 = composer.arithmetic_gate(|gate| {
-                   gate.witness(vc1, vd2, None)
-                       .add(F::one(), F::one())
-               });
-               let vc2 = mod_32(composer, _vc2);
+                let _vc2 = composer.arithmetic_gate(|gate| {
+                    gate.witness(vc1, vd2, None)
+                        .add(F::one(), F::one())
+                });
+                let vc2 = mod_32(composer, _vc2);
 
-               let temp6 = xor(composer,vb1, vc2, 32);
-               let vb2 = rotation(composer, temp6, 7, 32);
+                let temp6 = xor(composer,vb1, vc2, 32);
+                let vb2 = rotation(composer, temp6, 7, 32);
 
-               return (va2, vb2, vc2, vd2);
-           };
+                return (va2, vb2, vc2, vd2);
+            };
 
-           // Complete G function operation
-           let g_total = |
-              composer: &mut StandardComposer<F, P>,
-              v : &mut Vec<Variable> ,
-              m : Vec<Variable> ,
-              sigma : Vec<usize>,
-          | {
-              // Columns
-              (v[0], v[4], v[8], v[12]) = g_mix(composer, v[0], v[4], v[8], v[12],m[sigma[0]], m[sigma[1]]);
-              (v[1], v[5], v[9], v[13]) = g_mix(composer,v[1], v[5], v[9], v[13], m[sigma[2]], m[sigma[3]]);
-              (v[2], v[6], v[10], v[14]) = g_mix(composer,v[2], v[6], v[10], v[14], m[sigma[4]], m[sigma[5]]);
-              (v[3], v[7], v[11], v[15]) = g_mix(composer,v[3], v[7], v[11], v[15], m[sigma[6]], m[sigma[7]]);
+            // Complete G function operation
+            let g_total = |
+                composer: &mut StandardComposer<F, P>,
+                v : &mut Vec<Variable> ,
+                m : Vec<Variable> ,
+                sigma : Vec<usize>,
+            | {
+                // Columns
+                (v[0], v[4], v[8], v[12]) = g_mix(composer, v[0], v[4], v[8], v[12],m[sigma[0]], m[sigma[1]]);
+                (v[1], v[5], v[9], v[13]) = g_mix(composer,v[1], v[5], v[9], v[13], m[sigma[2]], m[sigma[3]]);
+                (v[2], v[6], v[10], v[14]) = g_mix(composer,v[2], v[6], v[10], v[14], m[sigma[4]], m[sigma[5]]);
+                (v[3], v[7], v[11], v[15]) = g_mix(composer,v[3], v[7], v[11], v[15], m[sigma[6]], m[sigma[7]]);
 
-              // Diagonals
-              (v[0], v[5], v[10], v[15]) = g_mix(composer, v[0], v[5], v[10], v[15], m[sigma[8]], m[sigma[9]]);
-              (v[1], v[6], v[11], v[12]) = g_mix(composer, v[1], v[6], v[11], v[12], m[sigma[10]], m[sigma[11]]);
-              (v[2], v[7], v[8], v[13]) = g_mix(composer, v[2], v[7], v[8], v[13], m[sigma[12]], m[sigma[13]]);
-              (v[3], v[4], v[9], v[14]) = g_mix(composer, v[3], v[4], v[9], v[14], m[sigma[14]], m[sigma[15]]);
-          };
+                // Diagonals
+                (v[0], v[5], v[10], v[15]) = g_mix(composer, v[0], v[5], v[10], v[15], m[sigma[8]], m[sigma[9]]);
+                (v[1], v[6], v[11], v[12]) = g_mix(composer, v[1], v[6], v[11], v[12], m[sigma[10]], m[sigma[11]]);
+                (v[2], v[7], v[8], v[13]) = g_mix(composer, v[2], v[7], v[8], v[13], m[sigma[12]], m[sigma[13]]);
+                (v[3], v[4], v[9], v[14]) = g_mix(composer, v[3], v[4], v[9], v[14], m[sigma[14]], m[sigma[15]]);
+            };
 
 
-           let mut m = Vec::new();
-           for i in &message{
-              m.push(composer.add_input(F::from(*i)));
-          };
+            let mut m = Vec::new();
+            for i in &message{
+                m.push(composer.add_input(F::from(*i)));
+            };
 
-           // (352957251, 3810779495, 2237070752, 544337075)
-           for i in 0..10{
-              g_total(composer, &mut v, m.clone(), sigma[i].clone());
-          }
+            // (352957251, 3810779495, 2237070752, 544337075)
+            for i in 0..10{
+                g_total(composer, &mut v, m.clone(), sigma[i].clone());
+            }
 
-           // XOR HALVES
-           for i in 0..8{
-              let temp = xor(composer,h_witness[i], v[i], 32);
-              h_witness[i] = xor(composer,temp, v[i + 8], 32);
-          };
+            // XOR HALVES
+            for i in 0..8{
+                let temp = xor(composer,h_witness[i], v[i], 32);
+                h_witness[i] = xor(composer,temp, v[i + 8], 32);
+            };
 
-          // Test vector form reference implementation
-          let h_test:Vec<usize> = vec![0x8C5E8C50, 0xE2147C32, 0xA32BA7E1, 0x2F45EB4E, 0x208B4537,
-              0x293AD69E, 0x4C9B994D, 0x82596786];
-          // Check validity of the hash:
-          for (i, h_i) in h_test.iter().enumerate(){
-              composer.constrain_to_constant(h_witness[i],F::from(*h_i as u64), None);
-          };
-          Ok(())
+            // Test vector form reference implementation
+            let h_test:Vec<usize> = vec![0x8C5E8C50, 0xE2147C32, 0xA32BA7E1, 0x2F45EB4E, 0x208B4537,
+                                         0x293AD69E, 0x4C9B994D, 0x82596786];
+            // Check validity of the hash:
+            for (i, h_i) in h_test.iter().enumerate(){
+                composer.constrain_to_constant(h_witness[i],F::from(*h_i as u64), None);
+            };
+            Ok(())
         }
 
         fn padded_circuit_size(&self) -> usize {
