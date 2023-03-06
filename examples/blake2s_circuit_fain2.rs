@@ -25,6 +25,9 @@ use rand_core::OsRng;
 use std::marker::PhantomData;
 use std::time::Instant;
 
+use std::fs::File;
+use std::io::Write;
+
 fn main() -> Result<(), Error> {
     // Implements a circuit that checks:
     // 1) a + b = c where C is a PI
@@ -435,6 +438,8 @@ fn main() -> Result<(), Error> {
         }
     }
 
+    let mut file = File::create("timing_blake2sfanin2.txt").unwrap();
+
     // Generate CRS
     // Time to generate CRS
     let start_crs = Instant::now();
@@ -442,14 +447,18 @@ fn main() -> Result<(), Error> {
     let pp = PC::setup(1 << 18, None, &mut OsRng)
         .map_err(to_pc_error::<BlsScalar, PC>)?;
     let end_crs = start_crs.elapsed();
-    println!("Time to generate CRS: {:?}", end_crs);
+    file.write_all(format!("Time to generate CRS: {:?}\n", end_crs).as_bytes()).unwrap();
+
+    // Generate circuit
+    // Create an instance of the circuit
+
     let mut circuit = Blake2Circuit::<BlsScalar, JubJubParameters>::default();
     // Compile the circuit
     // Time to compile the circuit
     let start_comp = Instant::now();
     let (pk_p, (vk, _pi_pos)) = circuit.compile::<PC>(&pp)?;
     let end_comp = start_comp.elapsed();
-    println!("Time to compile the circuit: {:?}", end_comp);
+    file.write_all(format!("Time to compile the circuit: {:?}\n", end_comp).as_bytes()).unwrap();
 
     //INPUT MESSAGE
     const MESS: &str = "abc";
@@ -466,7 +475,7 @@ fn main() -> Result<(), Error> {
         circuit.gen_proof::<PC>(&pp, pk_p, b"Test")
     }?;
     let end_proof = start_proof.elapsed();
-    println!("Time to generate proof: {:?}", end_proof);
+    file.write_all(format!("Time to generate proof: {:?}\n", end_proof).as_bytes()).unwrap();
 
     // Verifier POV
     // Time to verify proof
@@ -480,6 +489,6 @@ fn main() -> Result<(), Error> {
         b"Test",
     )?;
     let end_verify = start_verify.elapsed();
-    println!("Time to verify proof: {:?}", end_verify);
+    file.write_all(format!("Time to verify proof: {:?}\n", end_verify).as_bytes()).unwrap();
     Ok(())
 }
